@@ -61,3 +61,7 @@ export interface WorkflowState {
   // StateOptions is optional configuration to adjust the state behaviors
   getStateOptions(): StateOptions;
 }
+
+export function getFinalWorkflowStateId(s: WorkflowState): string {
+  return s.getStateId() || s.constructor.name;
+}

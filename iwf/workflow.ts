@@ -1,4 +1,7 @@
-export interface ObjectWorkflow {
+import { CommunicationMethodDef } from "./communication_method_def.ts";
+import { StateDef } from "./state_def.ts";
+
+export interface IWorkflow {
   // GetWorkflowStates defines the states of the workflow. A state represents a step of the workflow state machine.
   // A state can execute some commands (signal/timer) and wait for result
   // See more details in the WorkflowState interface.
@@ -7,7 +10,7 @@ export interface ObjectWorkflow {
   // If there is no startingState or with the default empty state list, the workflow
   // will not start any state execution after workflow stated. Application can still
   // use RPC to invoke new state execution in the future.
-  GetWorkflowStates(): StateDef[];
+  getWorkflowStates(): StateDef[];
 
   // GetPersistenceSchema defines all the persistence fields for this workflow, this includes:
   //  1. Data objects
@@ -19,7 +22,7 @@ export interface ObjectWorkflow {
   // Search attributes can be read/upsert in WorkflowState WaitUntil/Execute API
   // Search attributes can also be read by GetSearchAttributes Client API by external applications.
   // External applications can also use "SearchWorkflow" API to find workflows by SQL-like query
-  GetPersistenceSchema(): PersistenceFieldDef[];
+  getPersistenceSchema(): PersistenceFieldDef[];
 
   // GetCommunicationSchema defines all the communication methods for this workflow, this includes
   // 1. Signal channel
@@ -32,7 +35,7 @@ export interface ObjectWorkflow {
   // InterStateChannel is for synchronization communications between WorkflowStates.
   // E.g. WorkflowStateA will continue after receiving a value from WorkflowStateB
   ///
-  GetCommunicationSchema(): CommunicationMethodDef[];
+  getCommunicationSchema(): CommunicationMethodDef[];
 
   // GetWorkflowType Define the workflowType of this workflow definition.
   // See GetFinalWorkflowType for default value when return empty string.
@@ -42,5 +45,9 @@ export interface ObjectWorkflow {
   // Usually using default value is enough. Unless cases like:
   // 1. To avoid type name conflicts because the GetFinalWorkflowType is not long enough
   // 2. In case of dynamic workflow implementation, return customized values instead of using empty string
-  GetWorkflowType(): string;
+  getWorkflowType(): string;
+}
+
+export function getFinalWorkflowType(wf: IWorkflow): string {
+  return wf.getWorkflowType() || wf.constructor.name;
 }

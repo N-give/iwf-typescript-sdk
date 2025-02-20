@@ -5,7 +5,7 @@
   "module": "main.js",
   "types": "dist/index.ts",
   "scripts": {
-    "build-all": "npm gen && build",
+    "build:all": "npm run gen && npm run build",
     "build": "tsc",
     "test": "node --test",
     "gen": "rm -rf ./gen && openapi-generator-cli generate"
