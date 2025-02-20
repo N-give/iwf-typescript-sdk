@@ -1,14 +1,15 @@
 {
 	"compilerOptions": {
-		"allowImportingTsExtensions": true,
 		"noEmit": true,
+		"allowImportingTsExtensions": true,
 		"forceConsistentCasingInFileNames": true,
 		"lib": ["ESNext", "dom"],
 		"module": "NodeNext",
 		"resolveJsonModule": true,
 		"skipLibCheck": true,
 		"strict": true,
-		"target": "ESNext"
+		"target": "ESNext",
+		"outDir": "./dist"
 	},
 	"include": ["./**/*.ts"]
 }

@@ -1,6 +1,13 @@
-export class Client {
-  constructor() {
+import { Context } from "../gen/iwfidl/src/models/Context.ts";
+import { ObjectWorkflow } from "./workflow.ts";
+import { WorkflowOptions } from "./workflow_options.ts";
+import { UnregisteredClient } from "./unregistered_client.ts";
 
+export class Client {
+  unregisteredClient: UnregisteredClient;
+
+  constructor(unregisteredClient: UnregisteredClient) {
+    this.unregisteredClient = unregisteredClient;
   }
 
   startWorkflow(
@@ -9,7 +16,7 @@ export class Client {
     _workflowId: string,
     _timeoutSecs: number,
     _input: unknown,
-    _options: WorkflowOptions
+    _options: WorkflowOptions,
   ): string {
     return "";
   }
@@ -23,7 +30,7 @@ export class Client {
     _workflowId: string,
     _workflowRunId: string,
     _signalChannelName: string,
-    _signalValue: unknown
+    _signalValue: unknown,
   ) {
   }
 
@@ -48,7 +55,7 @@ export class Client {
     _workflow: ObjectWorkflow,
     _workflowId: string,
     _workflowRunId: string,
-    _keys: string[]
+    _keys: string[],
   ): Map<string, unknown> {
     return new Map();
   }
@@ -59,30 +66,30 @@ export class Client {
     _ctx: Context,
     _workflow: ObjectWorkflow,
     _workflowId: string,
-    _workflowRunId: string
+    _workflowRunId: string,
   ): Map<string, unknown> {
-    retrun new Map();
+    return new Map();
   }
 
   // SkipTimerByCommandId skips a timer for the state execution based on the timerCommandId
   skipTimerByCommandId(
-    _ctx: context.Context,
+    _ctx: Context,
     _workflowId: string,
     _workflowRunId: string,
     _workflowState: WorkflowState,
     _stateExecutionNumber: number,
-    _timerCommandId: stringw
+    _timerCommandId: string,
   ) {
   }
 
   // SkipTimerByCommandIndex skips a timer for the state execution based on the timerCommandId
   skipTimerByCommandIndex(
-    _ctx: context.Context,
+    _ctx: Context,
     _workflowId: string,
     _workflowRunId: string,
     _workflowState: WorkflowState,
     _stateExecutionNumber: number,
-    _timerCommandIndex: number
+    _timerCommandIndex: number,
   ) {
   }
 
@@ -91,12 +98,12 @@ export class Client {
   // rpc is required
   // input and outputPtr are optional
   invokeRPC(
-    _ctx: context.Context,
+    _ctx: Context,
     _workflowId: string,
     _workflowRunId: string,
     _rpc: RPC,
     _input: unknown,
-    _outputPtr: unknown
+    _outputPtr: unknown,
   ) {
   }
 }
