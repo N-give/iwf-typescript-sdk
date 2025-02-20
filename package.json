@@ -1,0 +1,26 @@
+{
+  "name": "iwf-typescript-sdk",
+  "version": "1.0.0",
+  "main": "index.js",
+  "module": "main.js",
+  "scripts": {
+    "build": "npm run gen && tsc",
+    "test": "glob -c \"node --import tsx --no-warnings --test\" \"./test/**/*.test.ts\"",
+    "gen": "rm -rf ./gen && openapi-generator-cli generate -g typescript -i ./iwf-idl/iwf-sdk.yaml -o ./gen/iwfidl -p packageName=iwfidl -p generateInterfaces=true -p isGoSubmodule=false --git-user-id indeedeng --git-repo-id iwf-idl"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@openapitools/openapi-generator-cli": "^2.16.3",
+    "@types/glob": "^8.1.0",
+    "@types/node": "^22.13.4",
+    "esm": "^3.2.25",
+    "glob": "^10.4.5",
+    "tsx": "^4.19.3"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}

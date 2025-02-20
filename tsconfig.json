@@ -1,0 +1,14 @@
+{
+	"compilerOptions": {
+		"allowImportingTsExtensions": true,
+		"noEmit": true,
+		"forceConsistentCasingInFileNames": true,
+		"lib": ["ESNext", "dom"],
+		"module": "NodeNext",
+		"resolveJsonModule": true,
+		"skipLibCheck": true,
+		"strict": true,
+		"target": "ESNext"
+	},
+	"include": ["./**/*.ts"]
+}
