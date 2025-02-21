@@ -24,7 +24,7 @@ export function dataAttributeDey(key: string): PersistenceFieldDef {
   };
 }
 
-export function searchAttributeDey(
+export function searchAttributeDef(
   key: string,
   saType: SearchAttributeValueType,
 ): PersistenceFieldDef {

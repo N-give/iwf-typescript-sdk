@@ -3,33 +3,35 @@ import { KeyValue } from "../gen/iwfidl/src/models/KeyValue.ts";
 import { SearchAttribute } from "../gen/iwfidl/src/models/SearchAttribute.ts";
 import { IObjectEncoder } from "./object_encoder.ts";
 import { EncodedObject } from "../gen/iwfidl/src/models/EncodedObject.ts";
-import { getSearchAttributeValue } from "./persistence_def.ts";
+import {
+  createSearchAttribute,
+  getSearchAttributeValue,
+  matchesSearchAttributeType,
+  SearchAtributeTypeMapper,
+  SearchAttributeTSType,
+} from "./utils/search_attributes.ts";
+import { StatSyncOptions } from "node:fs";
 
 export class Persistence {
   encoder: IObjectEncoder;
 
-  // for: data attributes
-  dataAttributesKeyMap: Map<string, boolean>;
+  dataAttrsKeyMap: Map<string, boolean>;
   currentDataAttributes: Map<string, EncodedObject>;
   dataAttributesToReturn: Map<string, EncodedObject>;
 
-  // for: stateExecutionLocals
   recordedEvents: Map<string, EncodedObject>;
   currentStateExeLocal: Map<string, EncodedObject>;
   stateExeLocalToReturn: Map<string, EncodedObject>;
 
-  // for: search attributes
   saKeyToType: Map<string, SearchAttributeValueType>;
-  saCurrentIntValue: Map<string, number>;
-  saIntToReturn: Map<string, number>;
-  saCurrentStringValue: Map<string, string>;
-  saStringToReturn: Map<string, string>;
-  saCurrentDoubleValue: Map<string, number>;
-  saDoubleToReturn: Map<string, number>;
-  saCurrentBoolValue: Map<string, boolean>;
-  saBoolToReturn: Map<string, boolean>;
-  saCurrentStrArrValue: Map<string, string[]>;
-  saStrArrToReturn: Map<string, string[]>;
+  saCurrent: Map<
+    SearchAttributeValueType,
+    Map<string, SearchAtributeTypeMapper[SearchAttributeValueType]>
+  >;
+  saToReturn: Map<
+    SearchAttributeValueType,
+    Map<string, SearchAtributeTypeMapper[SearchAttributeValueType]>
+  >;
 
   constructor(
     encoder: IObjectEncoder,
@@ -40,37 +42,130 @@ export class Persistence {
     stateLocals: KeyValue[],
   ) {
     this.encoder = encoder;
-    this.dataAttributesKeyMap = new Map();
+    this.dataAttrsKeyMap = dataAttrsKeyMap;
     this.currentDataAttributes = new Map();
     this.dataAttributesToReturn = new Map();
     this.recordedEvents = new Map();
     this.currentStateExeLocal = new Map();
     this.stateExeLocalToReturn = new Map();
-    this.saKeyToType = new Map();
-    this.saCurrentIntValue = new Map();
-    this.saIntToReturn = new Map();
-    this.saCurrentStringValue = new Map();
-    this.saStringToReturn = new Map();
-    this.saCurrentDoubleValue = new Map();
-    this.saDoubleToReturn = new Map();
-    this.saCurrentBoolValue = new Map();
-    this.saBoolToReturn = new Map();
-    this.saCurrentStrArrValue = new Map();
-    this.saStrArrToReturn = new Map();
+    this.saKeyToType = saKeyToType;
+
+    this.saCurrent = new Map([
+      [SearchAttributeValueType.Keyword, new Map()],
+      [SearchAttributeValueType.Text, new Map()],
+      [SearchAttributeValueType.KeywordArray, new Map()],
+      [SearchAttributeValueType.Double, new Map()],
+      [SearchAttributeValueType.Int, new Map()],
+      [SearchAttributeValueType.Bool, new Map()],
+      [SearchAttributeValueType.Datetime, new Map()],
+    ]);
+
+    this.saToReturn = new Map([
+      [SearchAttributeValueType.Keyword, new Map()],
+      [SearchAttributeValueType.Text, new Map()],
+      [SearchAttributeValueType.KeywordArray, new Map()],
+      [SearchAttributeValueType.Double, new Map()],
+      [SearchAttributeValueType.Int, new Map()],
+      [SearchAttributeValueType.Bool, new Map()],
+      [SearchAttributeValueType.Datetime, new Map()],
+    ]);
 
     dataObjects.forEach((d) => {
-      this.currentDataAttributes.set(d.key || `${d}`, d.value || `${d}`);
+      this.currentDataAttributes.set(d.key || `${d}`, d.value!);
     });
 
     stateLocals.forEach((l) => {
-      this.currentDataAttributes.set(l.key || `${l}`, l.value || `${l}`);
+      this.currentDataAttributes.set(l.key || `${l}`, l.value!);
     });
 
     searchAttributes.forEach((s) => {
-      this.currentDataAttributes.set(
-        s.key || `${s}`,
-        getSearchAttributeValue(s),
-      );
+      this.saCurrent
+        .get(s.valueType!)
+        ?.set(
+          s.key || `${s}`,
+          getSearchAttributeValue(s),
+        );
     });
+  }
+
+  getSearchAttribute<T extends SearchAttributeValueType>(
+    key: string,
+  ): SearchAtributeTypeMapper[T] | undefined {
+    const saType = this.saKeyToType.get(key);
+    if (saType === null || saType === undefined) {
+      throw new Error(`key ${key} has not been registered`);
+    }
+
+    const value = this.saCurrent.get(saType)?.get(key);
+    if (value === null || value === undefined) {
+      throw new Error(
+        `key ${key} has not been registered as ${saType} search attribute`,
+      );
+    }
+
+    return value as SearchAtributeTypeMapper[T];
+  }
+
+  setSearchAttribute(
+    key: string,
+    value: unknown,
+  ) {
+    const saType = this.saKeyToType.get(key);
+    if (saType === null || saType === undefined) {
+      throw new Error(`key ${key} has not been registered`);
+    }
+    if (!matchesSearchAttributeType(saType, value)) {
+      throw new Error(`value is not of type ${saType}`);
+    }
+    this.saCurrent.get(saType)?.set(key, value);
+  }
+
+  getStateExecutionLocal(key: string): unknown {
+    const state = this.currentStateExeLocal.get(key);
+    if (state === null || state === undefined) {
+      throw new Error(`state execution local ${key} is not registered`);
+    }
+    return this.encoder.decode(state);
+  }
+
+  setStateExecutionLocal(key: string, value: unknown) {
+    const encoded = this.encoder.encode(value);
+    this.currentStateExeLocal.set(key, encoded);
+    this.stateExeLocalToReturn.set(key, encoded);
+  }
+
+  recordEvent(key: string, value: unknown) {
+    const encoded = this.encoder.encode(value);
+    this.recordedEvents.set(key, encoded);
+  }
+
+  goToReturn(): unknown {
+    return {
+      dataObjectsToReturn: this.dataAttributesToReturn
+        .entries().map((key, value) => {
+          return { key, value };
+        }),
+
+      stateLocalToReturn: this.stateExeLocalToReturn
+        .entries().map((key, value) => {
+          return { key, value };
+        }),
+
+      recordEvents: this.recordedEvents
+        .entries().map((key, value) => {
+          return { key, value };
+        }),
+
+      searchAttributes: Array.from(
+        this.saToReturn
+          .entries().flatMap(([saType, sas]) => {
+            return sas.entries().map(
+              ([key, sa]) => {
+                return createSearchAttribute(key, saType, sa);
+              },
+            );
+          }),
+      ),
+    };
   }
 }
