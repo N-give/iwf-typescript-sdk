@@ -88,6 +88,26 @@ export class Persistence {
     });
   }
 
+  getDataAttribute(key: string): unknown {
+    if (!this.dataAttrsKeyMap.has(key)) {
+      throw new Error(`key ${key} is not regestered as a data object`);
+    }
+    const encoded = this.currentDataAttributes.get(key);
+    if (!encoded) {
+      throw new Error(`key ${key} does not contain any data`);
+    }
+    return this.encoder.decode(encoded);
+  }
+
+  setDataAttribute(key: string, value: unknown) {
+    if (!this.dataAttrsKeyMap.has(key)) {
+      throw new Error(`key ${key} is not regestered as a data object`);
+    }
+    const encoded = this.encoder.encode(value);
+    this.dataAttributesToReturn.set(key, encoded);
+    this.currentDataAttributes.set(key, encoded);
+  }
+
   getSearchAttribute<T extends SearchAttributeValueType>(
     key: string,
   ): SearchAtributeTypeMapper[T] | undefined {
