@@ -1,4 +1,5 @@
 import { CommunicationMethodDef } from "./communication_method_def.ts";
+import { PersistenceFieldDef } from "./persistence_def.ts";
 import { StateDef } from "./state_def.ts";
 
 export interface IWorkflow {

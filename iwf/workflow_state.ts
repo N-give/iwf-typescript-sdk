@@ -1,3 +1,5 @@
+import { Communication } from "./communication.ts";
+import { Persistence } from "./persistence.ts";
 import { StateDecision } from "./state_decision.ts";
 import { StateOptions } from "./state_options.ts";
 import { WorkflowContext } from "./workflow_context.ts";

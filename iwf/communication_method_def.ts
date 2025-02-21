@@ -12,32 +12,32 @@ export type CommunicationMethodDef =
   }
   & ({
     communicationMethod:
-      | CommunicationMethodType.SIGNAL_CHANNEL
-      | CommunicationMethodType.INTERNAL_CHANNEL;
+    | CommunicationMethodType.SIGNAL_CHANNEL
+    | CommunicationMethodType.INTERNAL_CHANNEL;
   } | {
     communicationMethod: CommunicationMethodType.RPC_METHOD;
     rpc: RPC;
     rpcOptions: RpcOptions;
   });
 
-export function signalChannel(name: string): CommunicationMethodDef {
+export function newSignalChannel(name: string): CommunicationMethodDef {
   return {
     name,
     communicationMethod: CommunicationMethodType.SIGNAL_CHANNEL,
   };
 }
 
-export function internalChannel(name: string): CommunicationMethodDef {
+export function newInternalChannel(name: string): CommunicationMethodDef {
   return {
     name,
     communicationMethod: CommunicationMethodType.INTERNAL_CHANNEL,
   };
 }
 
-export function rpcMethod(
+export function newRpcMethod(
   name: string,
   rpc: RPC,
-  rpcOptions: RPCOptions,
+  rpcOptions: RpcOptions,
 ): CommunicationMethodDef {
   return {
     name,
