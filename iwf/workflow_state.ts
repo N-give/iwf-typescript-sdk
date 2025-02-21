@@ -2,7 +2,7 @@ import { StateDecision } from "./state_decision.ts";
 import { StateOptions } from "./state_options.ts";
 import { WorkflowContext } from "./workflow_context.ts";
 
-export interface WorkflowState {
+export interface IWorkflowState {
   // GetStateId defines the StateId of this workflow state definition.
   // the StateId is being used for WorkerService to choose the right WorkflowState to execute Start/Execute APIs
   // See GetDefaultWorkflowStateId for default value when return empty string.
@@ -62,6 +62,6 @@ export interface WorkflowState {
   getStateOptions(): StateOptions;
 }
 
-export function getFinalWorkflowStateId(s: WorkflowState): string {
+export function getFinalWorkflowStateId(s: IWorkflowState): string {
   return s.getStateId() || s.constructor.name;
 }

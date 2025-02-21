@@ -10,8 +10,9 @@ import { ClientOptions } from "./client_options.ts";
 import { IWorkflow } from "./workflow.ts";
 import { UnregisteredClient } from "./unregistered_client.ts";
 import { WorkflowOptions } from "./workflow_options.ts";
-import { WorkflowState } from "./workflow_state.ts";
+import { IWorkflowState } from "./workflow_state.ts";
 import { WorkflowInfo } from "./workflow_info.ts";
+import { Registry } from "./registry.ts";
 
 export class Client {
   unregisteredClient: UnregisteredClient;
@@ -94,7 +95,7 @@ export class Client {
     _ctx: Context,
     _workflowId: string,
     _workflowRunId: string,
-    _workflowState: WorkflowState,
+    _workflowState: IWorkflowState,
     _stateExecutionNumber: number,
     _timerCommandId: string,
   ) {
@@ -105,7 +106,7 @@ export class Client {
     _ctx: Context,
     _workflowId: string,
     _workflowRunId: string,
-    _workflowState: WorkflowState,
+    _workflowState: IWorkflowState,
     _stateExecutionNumber: number,
     _timerCommandIndex: number,
   ) {
@@ -143,7 +144,7 @@ export class Client {
     _workflowId: string,
     _workflowRunId: string,
     _config: WorkflowConfig,
-  ) { }
+  ) {}
 
   // GetSimpleWorkflowResult returns the result of a workflow execution, for simple case that only one WorkflowState completes with result
   // If there are more than one WorkflowStates complete with result, GetComplexWorkflowResults must be used instead

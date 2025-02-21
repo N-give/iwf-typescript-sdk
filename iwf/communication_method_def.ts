@@ -1,3 +1,5 @@
+import { RpcOptions } from "./rpc_options.ts";
+
 export enum CommunicationMethodType {
   SIGNAL_CHANNEL,
   INTERNAL_CHANNEL,
@@ -10,12 +12,12 @@ export type CommunicationMethodDef =
   }
   & ({
     communicationMethod:
-    | CommunicationMethodType.SIGNAL_CHANNEL
-    | CommunicationMethodType.INTERNAL_CHANNEL;
+      | CommunicationMethodType.SIGNAL_CHANNEL
+      | CommunicationMethodType.INTERNAL_CHANNEL;
   } | {
     communicationMethod: CommunicationMethodType.RPC_METHOD;
     rpc: RPC;
-    rpcOptions: RPCOptions;
+    rpcOptions: RpcOptions;
   });
 
 export function signalChannel(name: string): CommunicationMethodDef {

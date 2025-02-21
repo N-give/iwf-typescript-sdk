@@ -1,31 +1,35 @@
-import { CommunicationMethodType } from "./communication_method_def.ts";
 import { SearchAttributeValueType } from "../gen/iwfidl/src/models/SearchAttributeValueType.ts";
+import {
+  CommunicationMethodDef,
+  CommunicationMethodType,
+} from "./communication_method_def.ts";
 import { PersistenceFieldType } from "./persistence_def.ts";
 import { getFinalWorkflowType, IWorkflow } from "./workflow.ts";
-import { getFinalWorkflowStateId, WorkflowState } from "./workflow_state.ts";
+import { getFinalWorkflowStateId, IWorkflowState } from "./workflow_state.ts";
+import { StateDef } from "./state_def.ts";
 
 export class Registry {
-  private _workflowStore: Map<string, IWorkflow>;
-  private _workflowStartingState: Map<string, WorkflowState>;
-  private _workflowStateStore: Map<string, Map<string, StateDef>>;
-  private _workflowRPCStore: Map<string, Map<string, CommunicationMethodDef>>;
-  private _signalNameStore: Map<string, Map<string, boolean>>;
-  private _internalChannelNameStore: Map<string, Map<string, boolean>>;
-  private _dataAttrsKeyStore: Map<string, Map<string, boolean>>;
-  private _searchAttributeTypeStore: Map<
+  private _workflows: Map<string, IWorkflow>;
+  private _startingStates: Map<string, IWorkflowState>;
+  private _states: Map<string, Map<string, StateDef>>;
+  private _rpcs: Map<string, Map<string, CommunicationMethodDef>>;
+  private _signals: Map<string, Map<string, boolean>>;
+  private _internalChannels: Map<string, Map<string, boolean>>;
+  private _dataAttributeKeys: Map<string, Map<string, boolean>>;
+  private _searchAttributeTypes: Map<
     string,
     Map<string, SearchAttributeValueType>
   >;
 
   constructor() {
-    this._workflowStore = new Map();
-    this._workflowStartingState = new Map();
-    this._workflowStateStore = new Map();
-    this._workflowRPCStore = new Map();
-    this._signalNameStore = new Map();
-    this._internalChannelNameStore = new Map();
-    this._dataAttrsKeyStore = new Map();
-    this._searchAttributeTypeStore = new Map();
+    this._workflows = new Map();
+    this._startingStates = new Map();
+    this._states = new Map();
+    this._rpcs = new Map();
+    this._signals = new Map();
+    this._internalChannels = new Map();
+    this._dataAttributeKeys = new Map();
+    this._searchAttributeTypes = new Map();
   }
 
   addWorkflows(...ws: IWorkflow[]) {
@@ -43,16 +47,16 @@ export class Registry {
 
   registerWorkflow(w: IWorkflow) {
     const wfType = getFinalWorkflowType(w);
-    this._workflowStore.set(wfType, w);
+    this._workflows.set(wfType, w);
   }
 
   registerWorkflowStates(w: IWorkflow) {
     const wfType = getFinalWorkflowType(w);
     const stateMap = new Map();
-    let startingState: WorkflowState | undefined;
+    let startingState: IWorkflowState | undefined;
     w.getWorkflowStates().forEach((state) => {
       const stateId = getFinalWorkflowStateId(state.state);
-      if (this._workflowStateStore.has(stateId)) {
+      if (this._states.has(stateId)) {
         throw new Error(
           `Workflow ${wfType} cannot have duplicate state ids ${stateId}`,
         );
@@ -74,8 +78,8 @@ export class Registry {
         `Workflow ${wfType} must have exactly one starting state`,
       );
     }
-    this._workflowStateStore.set(wfType, stateMap);
-    this._workflowStartingState.set(wfType, startingState);
+    this._states.set(wfType, stateMap);
+    this._startingStates.set(wfType, startingState);
   }
 
   registerWorkflowCommunicationSchema(w: IWorkflow) {
@@ -105,9 +109,9 @@ export class Registry {
           );
       }
     });
-    this._signalNameStore.set(wfType, signalMap);
-    this._internalChannelNameStore.set(wfType, internalMap);
-    this._workflowRPCStore.set(wfType, rpcMap);
+    this._signals.set(wfType, signalMap);
+    this._internalChannels.set(wfType, internalMap);
+    this._rpcs.set(wfType, rpcMap);
   }
 
   registerWorkflowPersistenceSchema(w: IWorkflow) {
@@ -131,7 +135,48 @@ export class Registry {
           );
       }
     });
-    this._dataAttrsKeyStore.set(wfType, dataAttrsKeys);
-    this._searchAttributeTypeStore.set(wfType, searchAttributes);
+    this._dataAttributeKeys.set(wfType, dataAttrsKeys);
+    this._searchAttributeTypes.set(wfType, searchAttributes);
+  }
+
+  getAllRegisteredWorkflowTypes(): string[] {
+    return Array.from(this._workflows.keys());
+  }
+
+  getWorkflowStartingState(wfType: string): IWorkflowState | undefined {
+    return this._startingStates.get(wfType);
+  }
+
+  getWorkflowStateDef(wfType: string, id: string): StateDef | undefined {
+    return this._states.get(wfType)?.get(id);
+  }
+
+  getWorkflowInternalChannelNameStore(
+    wfType: string,
+  ): Map<string, boolean> | undefined {
+    return this._internalChannels.get(wfType);
+  }
+
+  getWorkflowDataAttributesKeyStore(
+    wfType: string,
+  ): Map<string, boolean> | undefined {
+    return this._dataAttributeKeys.get(wfType);
+  }
+
+  getSearchAttributeTypeStore(
+    wfType: string,
+  ): Map<string, SearchAttributeValueType> | undefined {
+    return this._searchAttributeTypes.get(wfType);
+  }
+
+  getWorkflowRPC(
+    wfType: string,
+    rpcMethod: string,
+  ): CommunicationMethodDef | undefined {
+    return this._rpcs.get(wfType)?.get(rpcMethod);
+  }
+
+  getWorkflow(wfType: string): IWorkflow | undefined {
+    return this._workflows.get(wfType);
   }
 }

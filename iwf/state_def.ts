@@ -1,6 +1,6 @@
-import { WorkflowState } from "./workflow_state.ts";
+import { IWorkflowState } from "./workflow_state.ts";
 
 export type StateDef = {
-  state: WorkflowState;
+  state: IWorkflowState;
   canStartWorkflow: boolean;
 };

@@ -2,7 +2,7 @@ import { PersistenceLoadingPolicy } from "../gen/iwfidl/src/models/PersistenceLo
 import { RetryPolicy } from "../gen/iwfidl/src/models/RetryPolicy.ts";
 import { WaitUntilApiFailurePolicy } from "../gen/iwfidl/src/models/WaitUntilApiFailurePolicy.ts";
 
-import { WorkflowState } from "./workflow_state.ts";
+import { IWorkflowState } from "./workflow_state.ts";
 
 export type StateOptions = {
   // apply for both waitUntil and execute API
@@ -17,7 +17,7 @@ export type StateOptions = {
   // below are execute API specific options:
   executeApiTimeoutSeconds: number;
   executeApiRetryPolicy: RetryPolicy;
-  executeApiFailureProceedState: WorkflowState;
+  executeApiFailureProceedState: IWorkflowState;
   executeApiDataAttributesLoadingPolicy: PersistenceLoadingPolicy;
   executeApiSearchAttributesLoadingPolicy: PersistenceLoadingPolicy;
 };
