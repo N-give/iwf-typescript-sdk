@@ -120,18 +120,20 @@ export class Registry {
     const searchAttributes = new Map();
 
     w.getPersistenceSchema().forEach((p) => {
-      switch (p.fieldType) {
+      const fieldType = p.fieldType;
+      const key = p.key;
+      switch (fieldType) {
         case PersistenceFieldType.DATA_ATTRIBUTE:
-          dataAttrsKeys.set(p.key, true);
+          dataAttrsKeys.set(key, true);
           break;
 
         case PersistenceFieldType.SEARCH_ATTRIBUTE:
-          searchAttributes.set(p.key, p.searchAttributeType);
+          searchAttributes.set(key, PersistenceFieldType.SEARCH_ATTRIBUTE);
           break;
 
         default:
           throw new Error(
-            `workflow ${wfType} has unsupported persistence field type ${p.fieldType} for key ${p.key}`,
+            `workflow ${wfType} has unsupported persistence field type ${fieldType} for key ${key}`,
           );
       }
     });
