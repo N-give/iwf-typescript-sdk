@@ -8,7 +8,8 @@
     "build:all": "npm run gen && npm run build",
     "build": "tsc",
     "test": "node --test",
-    "gen": "rm -rf ./gen && openapi-generator-cli generate"
+    "gen": "openapi-generator-cli generate",
+    "clean": "rm -rf ./gen"
   },
   "keywords": [],
   "author": "",
@@ -17,7 +18,6 @@
   "dependencies": {
     "@openapitools/openapi-generator-cli": "^2.16.3",
     "esm": "^3.2.25",
-    "iwfidl": "./gen/iwfidl",
     "tsx": "^4.19.3"
   },
   "devDependencies": {
