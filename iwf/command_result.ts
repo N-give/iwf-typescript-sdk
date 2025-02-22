@@ -1,4 +1,4 @@
-import { ChannelRequestStatus } from "../gen/iwfidl/src";
+import { ChannelRequestStatus } from "../gen/iwfidl/src/models/ChannelRequestStatus.ts";
 import { TimerStatus } from "../gen/iwfidl/src/models/TimerStatus.ts";
 
 export type TimerCommandResult = {
@@ -23,6 +23,35 @@ export type InternalChannelCommandResult = {
 export class CommandResults {
   timers: TimerCommandResult[];
   signals: SignalCommandResult[];
-  internalChannelCommandResults: InternalChannelCommandResult[];
-  stateWaitUntilApiSucceeded: boolean;
+  internalChannels: InternalChannelCommandResult[];
+  private _stateWaitUntilApiSucceeded: boolean;
+
+  constructor(stateWaitUntilApiSucceeded: boolean) {
+    this.timers = [];
+    this.signals = [];
+    this.internalChannels = [];
+    this._stateWaitUntilApiSucceeded = stateWaitUntilApiSucceeded;
+  }
+
+  getTimerCommandResultById(
+    commandId: string,
+  ): TimerCommandResult | undefined {
+    return this.timers.find((t) => t.commandId === commandId);
+  }
+
+  getSignalCommandResultById(
+    commandId: string,
+  ): SignalCommandResult | undefined {
+    return this.signals.find((t) => t.commandId === commandId);
+  }
+
+  getInternalChannelCommandResultById(
+    commandId: string,
+  ): InternalChannelCommandResult | undefined {
+    return this.internalChannels.find((t) => t.commandId === commandId);
+  }
+
+  get stateWaitUntilApiSucceeded(): boolean {
+    return this._stateWaitUntilApiSucceeded;
+  }
 }
