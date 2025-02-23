@@ -1,3 +1,5 @@
+import { CommandRequest } from "./command.ts";
+import { CommandResults } from "./command_result.ts";
 import { Communication } from "./communication.ts";
 import { Persistence } from "./persistence.ts";
 import { StateDecision } from "./state_decision.ts";

@@ -7,12 +7,13 @@ import { WorkflowSearchRequest } from "../gen/iwfidl/src/models/WorkflowSearchRe
 import { WorkflowSearchResponse } from "../gen/iwfidl/src/models/WorkflowSearchResponse.ts";
 
 import { ClientOptions } from "./client_options.ts";
-import { IWorkflow } from "./workflow.ts";
+import { getFinalWorkflowType, IWorkflow } from "./workflow.ts";
 import { UnregisteredClient } from "./unregistered_client.ts";
 import { WorkflowOptions } from "./workflow_options.ts";
-import { IWorkflowState } from "./workflow_state.ts";
+import { getFinalWorkflowStateId, IWorkflowState } from "./workflow_state.ts";
 import { WorkflowInfo } from "./workflow_info.ts";
 import { Registry } from "./registry.ts";
+import { UnregisteredWorkflowOptions } from "./unregistered_workflow_options.ts";
 
 export class Client {
   unregisteredClient: UnregisteredClient;
@@ -31,13 +32,42 @@ export class Client {
 
   startWorkflow(
     _ctx: Context,
-    _workflow: IWorkflow,
+    workflow: IWorkflow,
     _workflowId: string,
     _timeoutSecs: number,
     _input: unknown,
-    _options: WorkflowOptions,
-  ): string {
-    return "";
+    options: WorkflowOptions,
+  ): Promise<string> {
+    const wfType = getFinalWorkflowType(workflow);
+    const wf = this.registry.getWorkflow(wfType);
+    if (wf === null || wf === undefined) {
+      throw new Error("Worflow is not registered");
+    }
+
+    const startingState = this.registry.getWorkflowStartingState(wfType);
+    if (startingState === null || startingState === undefined) {
+      throw new Error(`workflow ${wfType} does not have a starting state`);
+    }
+
+    let startStartId = getFinalWorkflowStateId(startingState);
+    let unregisteredOptions: UnregisteredWorkflowOptions = {
+      workflowIdReusePolicy: options.workflowIdReusePolicy,
+      workflowCronSchedule: options.workflowCronSchedule,
+      workflowStartDelaySeconds: options.workflowStartDelaySeconds,
+      workflowRetryPolicy: options.workflowRetryPolicy,
+      startStateOptions: undefined,
+      initialSearchAttributes: [],
+    };
+
+    return this.unregisteredClient.startWorkflow(
+      _ctx,
+      wfType,
+      startStartId,
+      _workflowId,
+      _timeoutSecs,
+      _input,
+      unregisteredOptions,
+    );
   }
 
   // SignalWorkflow signals a workflow execution
