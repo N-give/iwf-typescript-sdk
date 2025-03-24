@@ -1,4 +1,4 @@
-import { EncodedObject } from "../gen/iwfidl/src/models/EncodedObject.ts";
+import { EncodedObject } from "iwfidl";
 
 export interface IObjectEncoder {
   getEncodingType(): string;

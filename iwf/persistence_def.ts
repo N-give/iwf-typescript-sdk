@@ -1,5 +1,4 @@
-import { SearchAttributeValueType } from "../gen/iwfidl/src/models/SearchAttributeValueType.ts";
-import { SearchAttribute } from "../gen/iwfidl/src/models/SearchAttribute.ts";
+import { SearchAttributeValueType } from "iwfidl";
 
 export enum PersistenceFieldType {
   DATA_ATTRIBUTE,

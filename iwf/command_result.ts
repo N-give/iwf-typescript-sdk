@@ -1,5 +1,4 @@
-import { ChannelRequestStatus } from "../gen/iwfidl/src/models/ChannelRequestStatus.ts";
-import { TimerStatus } from "../gen/iwfidl/src/models/TimerStatus.ts";
+import { ChannelRequestStatus, TimerStatus } from "iwfidl";
 
 export type TimerCommandResult = {
   commandId: string;

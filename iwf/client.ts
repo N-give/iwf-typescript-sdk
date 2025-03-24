@@ -1,12 +1,20 @@
-import { Context } from "../gen/iwfidl/src/models/Context.ts";
+import {
+  Configuration,
+  Context,
+  DefaultApi,
+  SearchAttribute,
+  SearchAttributeValueType,
+  StateCompletionOutput,
+  WorkflowConfig,
+  WorkflowSearchRequest,
+  WorkflowSearchResponse,
+} from "iwfidl";
 import { ResetWorkflowOptions } from "./reset_workflow_options.ts";
-import { StateCompletionOutput } from "../gen/iwfidl/src/models/StateCompletionOutput.ts";
-import { WorkflowConfig } from "../gen/iwfidl/src/models/WorkflowConfig.ts";
 import { WorkflowStopOptions } from "./workflow_stop_options.ts";
-import { WorkflowSearchRequest } from "../gen/iwfidl/src/models/WorkflowSearchRequest.ts";
-import { WorkflowSearchResponse } from "../gen/iwfidl/src/models/WorkflowSearchResponse.ts";
-
-import { ClientOptions } from "./client_options.ts";
+import {
+  ClientOptions,
+  LOCAL_DEFAULT_CLIENT_OPTIONS,
+} from "./client_options.ts";
 import { getFinalWorkflowType, IWorkflow } from "./workflow.ts";
 import { UnregisteredClient } from "./unregistered_client.ts";
 import { WorkflowOptions } from "./workflow_options.ts";
@@ -14,6 +22,10 @@ import { getFinalWorkflowStateId, IWorkflowState } from "./workflow_state.ts";
 import { WorkflowInfo } from "./workflow_info.ts";
 import { Registry } from "./registry.ts";
 import { UnregisteredWorkflowOptions } from "./unregistered_workflow_options.ts";
+import { toIdlStateOptions } from "./utils/state_options.ts";
+import { shouldSkipWaitUntilApi } from "./utils/workflow_state.ts";
+import { getSearchAttributeValue } from "./utils/search_attributes.ts";
+import { RPC } from "./rpc.ts";
 
 export class Client {
   unregisteredClient: UnregisteredClient;
@@ -21,21 +33,36 @@ export class Client {
   options: ClientOptions;
 
   constructor(
-    unregisteredClient: UnregisteredClient,
     registry: Registry,
-    options: ClientOptions,
+    options?: ClientOptions,
   ) {
-    this.unregisteredClient = unregisteredClient;
+    if (!options) {
+      options = LOCAL_DEFAULT_CLIENT_OPTIONS;
+    }
+    const configuration = new Configuration({
+      basePath: options.serverUrl,
+      // fetchApi?: FetchAPI;
+      // middleware?: Middleware[];
+      // queryParamsStringify?: (params: HTTPQuery) => string;
+      // username?: string;
+      // password?: string;
+      // apiKey?: string | Promise<string> | ((name: string) => string | Promise<string>);
+      // accessToken?: string | Promise<string> | ((name?: string, scopes?: string[]) => string | Promise<string>);
+      // headers?: HTTPHeaders;
+      // credentials?: RequestCredentials;
+    });
+    const defaultApi = new DefaultApi(configuration);
     this.registry = registry;
     this.options = options;
+    this.unregisteredClient = new UnregisteredClient(defaultApi, options);
   }
 
   startWorkflow(
-    _ctx: Context,
+    ctx: Context,
     workflow: IWorkflow,
-    _workflowId: string,
-    _timeoutSecs: number,
-    _input: unknown,
+    workflowId: string,
+    timeoutSecs: number,
+    input: unknown,
     options: WorkflowOptions,
   ): Promise<string> {
     const wfType = getFinalWorkflowType(workflow);
@@ -49,23 +76,31 @@ export class Client {
       throw new Error(`workflow ${wfType} does not have a starting state`);
     }
 
-    let startStartId = getFinalWorkflowStateId(startingState);
-    let unregisteredOptions: UnregisteredWorkflowOptions = {
+    const startStartId = getFinalWorkflowStateId(startingState);
+    const saTypes = this.registry.getSearchAttributeTypeStore(wfType) ||
+      new Map();
+    const unregisteredOptions: UnregisteredWorkflowOptions = {
       workflowIdReusePolicy: options.workflowIdReusePolicy,
       workflowCronSchedule: options.workflowCronSchedule,
       workflowStartDelaySeconds: options.workflowStartDelaySeconds,
       workflowRetryPolicy: options.workflowRetryPolicy,
-      startStateOptions: undefined,
-      initialSearchAttributes: [],
+      startStateOptions: toIdlStateOptions(
+        shouldSkipWaitUntilApi(startingState),
+        startingState.getStateOptions(),
+      ),
+      initialSearchAttributes: this.convertToSearchAttributeList(
+        saTypes,
+        options.initialSearchAttributes,
+      ),
     };
 
     return this.unregisteredClient.startWorkflow(
-      _ctx,
+      ctx,
       wfType,
       startStartId,
-      _workflowId,
-      _timeoutSecs,
-      _input,
+      workflowId,
+      timeoutSecs,
+      input,
       unregisteredOptions,
     );
   }
@@ -74,72 +109,154 @@ export class Client {
   // workflowId is required, workflowRunId is optional and default to current runId of the workflowId
   // signalChannelName is required, signalValue is optional(for case of empty value)
   signalWorkflow(
-    _ctx: Context,
-    _workflow: IWorkflow,
-    _workflowId: string,
-    _workflowRunId: string,
-    _signalChannelName: string,
-    _signalValue: unknown,
+    ctx: Context,
+    workflow: IWorkflow,
+    workflowId: string,
+    workflowRunId: string,
+    signalChannelName: string,
+    signalValue: unknown,
   ) {
+    const wfType = getFinalWorkflowType(workflow);
+    const signalNameStore = this.registry.getSignalNameStore(wfType);
+    if (!signalNameStore?.has(signalChannelName)) {
+      throw new Error(
+        `signal channel ${signalChannelName} is not defined in workflow type ${wfType}`,
+      );
+    }
+    return this.unregisteredClient.signalWorkflow(
+      ctx,
+      workflowId,
+      workflowRunId,
+      signalChannelName,
+      signalValue,
+    );
   }
 
   // GetWorkflowDataAttributes returns the data objects of a workflow execution
   // workflowId is required, workflowRunId is optional and default to current runId of the workflowId
   // keys is required to be non-empty. If you intend to return all data objects, use GetAllWorkflowDataAttributes API instead
   getWorkflowDataAttributes(
-    _ctx: Context,
-    _workflow: IWorkflow,
-    _workflowId: string,
-    _workflowRunId: string,
-    _keys: string[],
+    ctx: Context,
+    workflow: IWorkflow,
+    workflowId: string,
+    workflowRunId: string,
+    keys: string[],
   ): Map<string, unknown> {
-    return new Map();
+    const wfType = getFinalWorkflowType(workflow);
+    const typeMap = this.registry.getWorkflowDataAttributesKeyStore(wfType);
+    keys.forEach((key) => {
+      if (!typeMap?.has(key)) {
+        throw new Error(`data object type ${key} is not registered`);
+      }
+    });
+    return this.unregisteredClient.getWorkflowDataAttributes(
+      ctx,
+      workflowId,
+      workflowRunId,
+      keys,
+    );
   }
 
   // GetWorkflowSearchAttributes returns search attributes of a workflow execution
   // workflowId is required, workflowRunId is optional and default to current runId of the workflowId
   // keys is required to be non-empty. If you intend to return all data objects, use GetAllWorkflowSearchAttributes API instead
   getWorkflowSearchAttributes(
-    _ctx: Context,
-    _workflow: IWorkflow,
-    _workflowId: string,
-    _workflowRunId: string,
-    _keys: string[],
+    ctx: Context,
+    workflow: IWorkflow,
+    workflowId: string,
+    workflowRunId: string,
+    keys: string[],
   ): Map<string, unknown> {
-    return new Map();
+    const wfType = getFinalWorkflowType(workflow);
+    const typeMap = this.registry.getSearchAttributeTypeStore(wfType);
+    if (!typeMap) {
+      throw new Error(`workflow type ${wfType} is not regestered`);
+    }
+    const keyAndTypes = Array.from(
+      keys
+        .filter((key) => typeMap.get(key))
+        .map((key) => {
+          return {
+            key,
+            valueType: typeMap.get(key),
+          };
+        }),
+    );
+    const vals = this.unregisteredClient.getWorkflowSearchAttributes(
+      ctx,
+      workflowId,
+      workflowRunId,
+      keyAndTypes,
+    );
+    return new Map(
+      vals.entries().map(([k, v]) => [
+        k,
+        getSearchAttributeValue(v),
+      ]),
+    );
   }
 
   // GetAllWorkflowSearchAttributes returns all search attributes of a workflow execution
   // workflowId is required, workflowRunId is optional and default to current runId of the workflowId
   getAllWorkflowSearchAttributes(
-    _ctx: Context,
-    _workflow: IWorkflow,
-    _workflowId: string,
-    _workflowRunId: string,
+    ctx: Context,
+    workflow: IWorkflow,
+    workflowId: string,
+    workflowRunId: string,
   ): Map<string, unknown> {
-    return new Map();
+    const wfType = getFinalWorkflowType(workflow);
+    const typeMap = this.registry.getSearchAttributeTypeStore(wfType);
+    if (!typeMap) {
+      throw new Error(`workflow type ${wfType} is not regestered`);
+    }
+    const keys = Array.from(typeMap.keys());
+    return this.getWorkflowSearchAttributes(
+      ctx,
+      workflow,
+      workflowId,
+      workflowRunId,
+      keys,
+    );
   }
 
   // SkipTimerByCommandId skips a timer for the state execution based on the timerCommandId
   skipTimerByCommandId(
-    _ctx: Context,
-    _workflowId: string,
-    _workflowRunId: string,
-    _workflowState: IWorkflowState,
-    _stateExecutionNumber: number,
-    _timerCommandId: string,
+    ctx: Context,
+    workflowId: string,
+    workflowRunId: string,
+    workflowState: IWorkflowState,
+    stateExecutionNumber: number,
+    timerCommandId: string,
   ) {
+    const stateId = getFinalWorkflowStateId(workflowState);
+    return this.unregisteredClient.skipTimerByCommandId(
+      ctx,
+      workflowId,
+      workflowRunId,
+      stateId,
+      stateExecutionNumber,
+      timerCommandId,
+    );
   }
 
   // SkipTimerByCommandIndex skips a timer for the state execution based on the timerCommandId
   skipTimerByCommandIndex(
-    _ctx: Context,
-    _workflowId: string,
-    _workflowRunId: string,
-    _workflowState: IWorkflowState,
-    _stateExecutionNumber: number,
-    _timerCommandIndex: number,
+    ctx: Context,
+    workflowId: string,
+    workflowRunId: string,
+    workflowState: IWorkflowState,
+    stateExecutionNumber: number,
+    timerCommandIndex: number,
   ) {
+    const stateId = getFinalWorkflowStateId(workflowState);
+    return this.unregisteredClient.skipTimerByCommandIndex(
+      ctx,
+      workflowId,
+      workflowRunId,
+      stateId,
+      stateExecutionNumber,
+      timerCommandIndex,
+    );
   }
 
   // InvokeRPC invokes an RPC
@@ -243,5 +360,71 @@ export class Client {
     _workflowRunId: string,
   ): Map<string, unknown> {
     return new Map();
+  }
+
+  convertToSearchAttributeList(
+    types: Map<string, SearchAttributeValueType>,
+    attributes: Map<string, unknown>,
+  ): SearchAttribute[] {
+    return Array.from(
+      attributes.entries().map(([key, value]) => {
+        const t = types.get(key);
+        if (!t) {
+          throw new Error(`key ${key} is not defined as search attribute`);
+        }
+        const a: SearchAttribute = { key };
+        switch (t) {
+          case SearchAttributeValueType.Int:
+            if (typeof value !== "number" || !Number.isInteger(value)) {
+              throw new Error(
+                `Attribute, ${key}, value, ${value} does not match registered of ${t}`,
+              );
+            }
+            a.integerValue = value;
+            break;
+
+          case SearchAttributeValueType.Double:
+            if (typeof value !== "number") {
+              throw new Error(
+                `Attribute, ${key}, value, ${value} does not match registered of ${t}`,
+              );
+            }
+            a.doubleValue = value;
+            break;
+
+          case SearchAttributeValueType.Bool:
+            if (typeof value !== "boolean") {
+              throw new Error(
+                `Attribute, ${key}, value, ${value} does not match registered of ${t}`,
+              );
+            }
+            a.boolValue = value;
+            break;
+
+          case SearchAttributeValueType.Keyword, SearchAttributeValueType.Text:
+            if (typeof value !== "string") {
+              throw new Error(
+                `Attribute, ${key}, value, ${value} does not match registered type ${t}`,
+              );
+            }
+            a.stringValue = value;
+            break;
+
+          case SearchAttributeValueType.Datetime:
+            if (typeof value !== "object" || !(value instanceof Date)) {
+              throw new Error(
+                `Attribute, ${key}, value, ${value} does not match registered type ${t}`,
+              );
+            }
+
+            a.stringValue = value.toLocaleString();
+            break;
+
+          default:
+            throw new Error(`unsupported search attribute type ${t}`);
+        }
+        return a;
+      }),
+    );
   }
 }

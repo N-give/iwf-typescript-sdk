@@ -1,4 +1,4 @@
-import { WorkflowStatus } from "../gen/iwfidl/src/models/WorkflowStatus.ts";
+import { WorkflowStatus } from "iwfidl";
 
 export type WorkflowInfo = {
   status: WorkflowStatus;

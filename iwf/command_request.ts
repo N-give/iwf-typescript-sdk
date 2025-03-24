@@ -1,5 +1,18 @@
-import { CommandCombination, CommandWaitingType } from "../gen/iwfidl/src";
-import { Command } from "./command.ts";
+import {
+  CommandCombination,
+  CommandRequest as IdlCommandRequest,
+  CommandWaitingType,
+  InterStateChannelCommand as IdlInterStateChannelCommand,
+  SignalCommand as IdlSignalCommand,
+  TimerCommand as IdlTimerCommand,
+} from "iwfidl";
+import {
+  Command,
+  CommandType,
+  InternalChannelCommand,
+  SignalCommand,
+  TimerCommand,
+} from "./command.ts";
 
 export type CommandRequest = {
   commands?: Command[];
@@ -56,4 +69,67 @@ export function anyCommandCombinationCompletedRequest(
       },
     )),
   };
+}
+
+export function toIdlCommandRequest(
+  commandRequest: CommandRequest,
+): IdlCommandRequest {
+  const initialValue: {
+    timers: IdlTimerCommand[];
+    signals: IdlSignalCommand[];
+    interStateCmds: IdlInterStateChannelCommand[];
+  } = {
+    timers: [],
+    signals: [],
+    interStateCmds: [],
+  };
+  const { timers, signals, interStateCmds }: {
+    timers: IdlTimerCommand[];
+    signals: IdlSignalCommand[];
+    interStateCmds: IdlInterStateChannelCommand[];
+  } = (commandRequest.commands || []).reduce(
+    (cs, c) => {
+      switch (c.commandType) {
+        case CommandType.TIMER:
+          cs.timers.push({
+            commandId: c.commandId,
+            durationSeconds: c.timerCommand.durationSeconds,
+          });
+          break;
+
+        case CommandType.SIGNAL_CHANNEL:
+          cs.signals.push({
+            commandId: c.commandId,
+            signalChannelName: c.signalCommand.channelName,
+          });
+          break;
+
+        case CommandType.INTERNAL_CHANNEL:
+          cs.interStateCmds.push({
+            commandId: c.commandId,
+            channelName: c.internalChannelCommand.channelName,
+          });
+          break;
+
+        default:
+          break;
+      }
+      return cs;
+    },
+    initialValue,
+  );
+
+  const idlCmdReq: IdlCommandRequest = {
+    commandWaitingType: commandRequest.commandWaitingType,
+  };
+  if (timers.length > 0) {
+    idlCmdReq.timerCommands = timers;
+  }
+  if (signals.length > 0) {
+    idlCmdReq.signalCommands = signals;
+  }
+  if (interStateCmds.length > 0) {
+    idlCmdReq.interStateChannelCommands = interStateCmds;
+  }
+  return commandRequest;
 }

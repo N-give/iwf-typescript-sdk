@@ -1,4 +1,4 @@
-import { SearchAttributeValueType } from "../gen/iwfidl/src/models/SearchAttributeValueType.ts";
+import { SearchAttributeValueType } from "iwfidl";
 import {
   CommunicationMethodDef,
   CommunicationMethodType,
@@ -12,8 +12,8 @@ export class Registry {
   private _workflows: Map<string, IWorkflow>;
   private _startingStates: Map<string, IWorkflowState>;
   private _states: Map<string, Map<string, StateDef>>;
-  private _rpcs: Map<string, Map<string, CommunicationMethodDef>>;
-  private _signals: Map<string, Map<string, boolean>>;
+  private _rpcNameStore: Map<string, Map<string, CommunicationMethodDef>>;
+  private _signalNameStore: Map<string, Map<string, boolean>>;
   private _internalChannels: Map<string, Map<string, boolean>>;
   private _dataAttributeKeys: Map<string, Map<string, boolean>>;
   private _searchAttributeTypes: Map<
@@ -25,8 +25,8 @@ export class Registry {
     this._workflows = new Map();
     this._startingStates = new Map();
     this._states = new Map();
-    this._rpcs = new Map();
-    this._signals = new Map();
+    this._rpcNameStore = new Map();
+    this._signalNameStore = new Map();
     this._internalChannels = new Map();
     this._dataAttributeKeys = new Map();
     this._searchAttributeTypes = new Map();
@@ -109,9 +109,9 @@ export class Registry {
           );
       }
     });
-    this._signals.set(wfType, signalMap);
+    this._signalNameStore.set(wfType, signalMap);
     this._internalChannels.set(wfType, internalMap);
-    this._rpcs.set(wfType, rpcMap);
+    this._rpcNameStore.set(wfType, rpcMap);
   }
 
   registerWorkflowPersistenceSchema(w: IWorkflow) {
@@ -153,6 +153,10 @@ export class Registry {
     return this._states.get(wfType)?.get(id);
   }
 
+  getSignalNameStore(wfType: string): Map<string, boolean> | undefined {
+    return this._signalNameStore.get(wfType);
+  }
+
   getWorkflowInternalChannelNameStore(
     wfType: string,
   ): Map<string, boolean> | undefined {
@@ -175,7 +179,7 @@ export class Registry {
     wfType: string,
     rpcMethod: string,
   ): CommunicationMethodDef | undefined {
-    return this._rpcs.get(wfType)?.get(rpcMethod);
+    return this._rpcNameStore.get(wfType)?.get(rpcMethod);
   }
 
   getWorkflow(wfType: string): IWorkflow | undefined {

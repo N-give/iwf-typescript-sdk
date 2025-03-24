@@ -93,7 +93,3 @@ export function newTimerCommandByDuration(
     },
   };
 }
-
-export type CommandRequest = {
-  //
-};

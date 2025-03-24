@@ -1,4 +1,4 @@
-import { WorkflowStopType } from "../gen/iwfidl/src/models/WorkflowStopType.ts";
+import { WorkflowStopType } from "iwfidl";
 
 export type WorkflowStopOptions = {
   stopType: WorkflowStopType;

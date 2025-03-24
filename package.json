@@ -18,10 +18,12 @@
   "dependencies": {
     "@openapitools/openapi-generator-cli": "^2.16.3",
     "esm": "^3.2.25",
+    "fastify": "^5.2.1",
+    "iwfidl": "file:gen/iwfidl",
     "tsx": "^4.19.3"
   },
   "devDependencies": {
-    "typescript": "^5.7.3",
-    "@types/node": "^22.13.4"
+    "@types/node": "^22.13.4",
+    "typescript": "^5.7.3"
   }
 }

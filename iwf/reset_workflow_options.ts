@@ -1,4 +1,4 @@
-import { WorkflowResetType } from "../gen/iwfidl/src/models/WorkflowResetType.ts";
+import { WorkflowResetType } from "iwfidl";
 
 export type ResetWorkflowOptions = {
   resetType: WorkflowResetType;

@@ -1,4 +1,4 @@
-import { PersistenceLoadingPolicy } from "../gen/iwfidl/src/models/PersistenceLoadingPolicy.ts";
+import { PersistenceLoadingPolicy } from "iwfidl";
 
 export type RpcOptions = {
   timeoutSeconds: number;

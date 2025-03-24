@@ -1,4 +1,4 @@
-import { Context } from "../gen/iwfidl/src/models/Context.ts";
+import { Context } from "iwfidl";
 
 export class WorkflowContext {
   ctx: Context;

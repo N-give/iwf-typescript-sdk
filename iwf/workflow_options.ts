@@ -1,5 +1,4 @@
-import { WorkflowRetryPolicy } from "../gen/iwfidl/src/models/WorkflowRetryPolicy.ts";
-import { IDReusePolicy } from "../gen/iwfidl/src/models/IDReusePolicy.ts";
+import { IDReusePolicy, WorkflowRetryPolicy } from "iwfidl";
 
 export type WorkflowOptions = {
   workflowIdReusePolicy: IDReusePolicy;

@@ -1,16 +1,16 @@
-import { SearchAttributeValueType } from "../gen/iwfidl/src/models/SearchAttributeValueType.ts";
-import { KeyValue } from "../gen/iwfidl/src/models/KeyValue.ts";
-import { SearchAttribute } from "../gen/iwfidl/src/models/SearchAttribute.ts";
+import {
+  EncodedObject,
+  KeyValue,
+  SearchAttribute,
+  SearchAttributeValueType,
+} from "iwfidl";
 import { IObjectEncoder } from "./object_encoder.ts";
-import { EncodedObject } from "../gen/iwfidl/src/models/EncodedObject.ts";
 import {
   createSearchAttribute,
   getSearchAttributeValue,
   matchesSearchAttributeType,
   SearchAtributeTypeMapper,
-  SearchAttributeTSType,
 } from "./utils/search_attributes.ts";
-import { StatSyncOptions } from "node:fs";
 
 export class Persistence {
   encoder: IObjectEncoder;
@@ -159,24 +159,35 @@ export class Persistence {
     this.recordedEvents.set(key, encoded);
   }
 
-  goToReturn(): unknown {
+  getToReturn(): {
+    dataObjectsToReturn: KeyValue[];
+    stateLocalToReturn: KeyValue[];
+    recordEvents: KeyValue[];
+    upsertSearchAttributes: SearchAttribute[];
+  } {
     return {
-      dataObjectsToReturn: this.dataAttributesToReturn
-        .entries().map((key, value) => {
-          return { key, value };
-        }),
+      dataObjectsToReturn: Array.from(
+        this.dataAttributesToReturn
+          .entries().map(([key, value]) => {
+            return { key, value };
+          }),
+      ),
 
-      stateLocalToReturn: this.stateExeLocalToReturn
-        .entries().map((key, value) => {
-          return { key, value };
-        }),
+      stateLocalToReturn: Array.from(
+        this.stateExeLocalToReturn
+          .entries().map(([key, value]) => {
+            return { key, value };
+          }),
+      ),
 
-      recordEvents: this.recordedEvents
-        .entries().map((key, value) => {
-          return { key, value };
-        }),
+      recordEvents: Array.from(
+        this.recordedEvents
+          .entries().map(([key, value]) => {
+            return { key, value };
+          }),
+      ),
 
-      searchAttributes: Array.from(
+      upsertSearchAttributes: Array.from(
         this.saToReturn
           .entries().flatMap(([saType, sas]) => {
             return sas.entries().map(

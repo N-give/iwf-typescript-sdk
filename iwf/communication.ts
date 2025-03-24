@@ -1,4 +1,4 @@
-import { EncodedObject } from "../gen/iwfidl/src/models/EncodedObject.ts";
+import { EncodedObject } from "iwfidl";
 import { IObjectEncoder } from "./object_encoder.ts";
 import { StateMovement } from "./state_movement.ts";
 

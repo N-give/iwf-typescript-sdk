@@ -1,5 +1,4 @@
-import { SearchAttributeValueType } from "../../gen/iwfidl/src/models/SearchAttributeValueType.ts";
-import { SearchAttribute } from "../../gen/iwfidl/src/models/SearchAttribute.ts";
+import { SearchAttribute, SearchAttributeValueType } from "iwfidl";
 
 export type SearchAttributeTSType =
   | string

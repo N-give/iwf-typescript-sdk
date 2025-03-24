@@ -1,4 +1,4 @@
-import { CommandRequest } from "./command.ts";
+import { CommandRequest } from "./command_request.ts";
 import { CommandResults } from "./command_result.ts";
 import { Communication } from "./communication.ts";
 import { Persistence } from "./persistence.ts";
@@ -33,12 +33,12 @@ export interface IWorkflowState {
   //                         Note that any write API will be recorded to server after the whole start API response is accepted.
   // @return the requested commands for this state
   ///
-  waitUntil(
+  waitUntil?: (
     ctx: WorkflowContext,
     input: unknown,
     persistence: Persistence,
     communication: Communication,
-  ): CommandRequest;
+  ) => CommandRequest;
 
   // Execute is the method to execute and decide what to do next. Invoke after commands from WaitUntil are completed, or there is WaitUntil is not implemented for the state.
   //
@@ -61,9 +61,9 @@ export interface IWorkflowState {
     communication: Communication,
   ): StateDecision;
 
-  // GetStateOptions can just return nil to use the default Options
+  // GetStateOptions can just return undefined to use the default Options
   // StateOptions is optional configuration to adjust the state behaviors
-  getStateOptions(): StateOptions;
+  getStateOptions: () => StateOptions | undefined;
 }
 
 export function getFinalWorkflowStateId(s: IWorkflowState): string {
