@@ -1,7 +1,10 @@
 {
 	"compilerOptions": {
+		"allowImportingTsExtensions": true,
 		"rewriteRelativeImportExtensions": true,
 		"forceConsistentCasingInFileNames": true,
+		"declaration": true,
+		"allowJs": false,
 		"lib": ["ESNext", "dom"],
 		"module": "NodeNext",
 		"resolveJsonModule": true,
@@ -10,5 +13,12 @@
 		"target": "ESNext",
 		"outDir": "./dist"
 	},
-	"include": ["iwf/**/*", "test/**/*"]
+	"include": [
+		"iwf",
+		"test"
+	],
+	"exclude": [
+		"dist",
+		"node_modules"
+	]
 }

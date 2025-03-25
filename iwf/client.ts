@@ -291,7 +291,7 @@ export class Client {
     _workflowId: string,
     _workflowRunId: string,
     _config: WorkflowConfig,
-  ) {}
+  ) { }
 
   // GetSimpleWorkflowResult returns the result of a workflow execution, for simple case that only one WorkflowState completes with result
   // If there are more than one WorkflowStates complete with result, GetComplexWorkflowResults must be used instead
@@ -372,7 +372,6 @@ export class Client {
         if (!t) {
           throw new Error(`key ${key} is not defined as search attribute`);
         }
-        const a: SearchAttribute = { key };
         switch (t) {
           case SearchAttributeValueType.Int:
             if (typeof value !== "number" || !Number.isInteger(value)) {
@@ -380,8 +379,10 @@ export class Client {
                 `Attribute, ${key}, value, ${value} does not match registered of ${t}`,
               );
             }
-            a.integerValue = value;
-            break;
+            return {
+              key,
+              integerValue: value,
+            };
 
           case SearchAttributeValueType.Double:
             if (typeof value !== "number") {
@@ -389,8 +390,10 @@ export class Client {
                 `Attribute, ${key}, value, ${value} does not match registered of ${t}`,
               );
             }
-            a.doubleValue = value;
-            break;
+            return {
+              key,
+              doubleValue: value,
+            };
 
           case SearchAttributeValueType.Bool:
             if (typeof value !== "boolean") {
@@ -398,8 +401,10 @@ export class Client {
                 `Attribute, ${key}, value, ${value} does not match registered of ${t}`,
               );
             }
-            a.boolValue = value;
-            break;
+            return {
+              key,
+              boolValue: value,
+            };
 
           case SearchAttributeValueType.Keyword, SearchAttributeValueType.Text:
             if (typeof value !== "string") {
@@ -407,8 +412,10 @@ export class Client {
                 `Attribute, ${key}, value, ${value} does not match registered type ${t}`,
               );
             }
-            a.stringValue = value;
-            break;
+            return {
+              key,
+              stringValue: value,
+            };
 
           case SearchAttributeValueType.Datetime:
             if (typeof value !== "object" || !(value instanceof Date)) {
@@ -416,14 +423,14 @@ export class Client {
                 `Attribute, ${key}, value, ${value} does not match registered type ${t}`,
               );
             }
-
-            a.stringValue = value.toLocaleString();
-            break;
+            return {
+              key,
+              stringValue: value.toLocaleString(),
+            };
 
           default:
             throw new Error(`unsupported search attribute type ${t}`);
         }
-        return a;
       }),
     );
   }

@@ -2,6 +2,8 @@ import {
   Context,
   EncodedObject,
   InterStateChannelPublishing,
+  WorkflowStateExecuteRequest,
+  WorkflowStateExecuteResponse,
   WorkflowStateWaitUntilRequest,
   WorkflowStateWaitUntilResponse,
 } from "iwfidl";
@@ -48,15 +50,16 @@ export class WorkerService {
       encodedObject: request.stateInput || {},
       objectEncoder: this.options.objectEncoder,
     };
-    const ctx = new WorkflowContext(
-      request.context,
-      request.context.workflowId,
-      request.context.workflowRunId,
-      request.context.stateExecutionId || "",
-      request.context.workflowStartedTimestamp,
-      request.context.attempt || 1,
-      request.context.firstAttemptTimestamp || Date.now(),
-    );
+    const ctx: WorkflowContext = {
+      ctx: request.context,
+      workflowId: request.context.workflowId,
+      workflowRunId: request.context.workflowRunId,
+      stateExecutionId: request.context.stateExecutionId || "",
+      workflowStartTimestampSeconds: request.context.workflowStartedTimestamp,
+      attempt: request.context.attempt || 1,
+      firstAttemptTimestampSeconds: request.context.firstAttemptTimestamp ||
+        Date.now(),
+    };
     const persistence = new Persistence(
       this.options.objectEncoder,
       this.registry.getWorkflowDataAttributesKeyStore(wfType) || new Map(),
@@ -112,6 +115,26 @@ export class WorkerService {
 
     return res;
   }
+
+  handleWorkflowStateExecute(
+    stateExecuteRequest: WorkflowStateExecuteRequest,
+  ): WorkflowStateExecuteResponse {
+    const state = this.registry.getWorkflowStateDef(
+      stateExecuteRequest.workflowType,
+      stateExecuteRequest.workflowStateId,
+    );
+    const input = this.options.objectEncoder.decode(
+      stateExecuteRequest.stateInput || {
+        encoding: "json",
+        data: "",
+      },
+    );
+    const ctx = fromIdlContext(
+      stateExecuteRequest.context,
+      stateExecuteRequest.workflowType,
+    );
+    return null;
+  }
 }
 
 function getToPublish(
@@ -124,4 +147,18 @@ function getToPublish(
       });
     }),
   );
+}
+
+function fromIdlContext(ctx: Context, wfType: string): Context {
+  if (!ctx.attempt) {
+    ctx.attempt = -1;
+  }
+  if (!ctx.firstAttemptTimestamp) {
+    ctx.firstAttemptTimestamp = -1;
+  }
+  return {
+    workflowId: ctx.workflowId,
+    workflowRunId: "",
+    workflowStartedTimestamp: 0,
+  };
 }
