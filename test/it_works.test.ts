@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { before, describe, it } from "node:test";
 import { Client } from "../iwf/client.ts";
+import { Fastify, FastifyInstance } from "fastify";
 import { LOCAL_DEFAULT_CLIENT_OPTIONS } from "../iwf/client_options.ts";
 import { Context } from "iwfidl";
 import { Registry } from "../iwf/registry.ts";
-import { IWorkflow } from "../iwf/workflow.ts";
 import { BASIC_WORKFLOW } from "./workflows/basic_workflow.ts";
+import routes from "./routes.ts";
 
 const registry: Registry = new Registry();
 registry.addWorkflow(BASIC_WORKFLOW);
@@ -14,7 +15,19 @@ const client: Client = new Client(
   LOCAL_DEFAULT_CLIENT_OPTIONS,
 );
 
-describe("Start the test workflow", () => {
+describe("Basic workflow tests", () => {
+  let fastify: FastifyInstance;
+
+  before(async () => {
+    fastify = Fastify({
+      logger: true,
+    });
+    fastify.registry(routes);
+    await fastify.listen({
+      port: 8803,
+    });
+  });
+
   it("starts the test workflow", async () => {
     console.log("starting test...");
     const ctx: Context = {

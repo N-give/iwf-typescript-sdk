@@ -35,11 +35,11 @@ export class Persistence {
 
   constructor(
     encoder: IObjectEncoder,
-    dataAttrsKeyMap: Map<string, boolean>,
-    saKeyToType: Map<string, SearchAttributeValueType>,
-    dataObjects: KeyValue[],
-    searchAttributes: SearchAttribute[],
-    stateLocals: KeyValue[],
+    dataAttrsKeyMap: Map<string, boolean> = new Map(),
+    saKeyToType: Map<string, SearchAttributeValueType> = new Map(),
+    dataObjects: KeyValue[] = [],
+    searchAttributes: SearchAttribute[] = [],
+    stateLocals: KeyValue[] = [],
   ) {
     this.encoder = encoder;
     this.dataAttrsKeyMap = dataAttrsKeyMap;

@@ -10,7 +10,7 @@ export class Communication {
 
   constructor(
     encoder: IObjectEncoder,
-    internalChannelNames: Map<string, boolean>,
+    internalChannelNames: Map<string, boolean> = new Map(),
   ) {
     this.encoder = encoder;
     this.internalChannelNames = internalChannelNames;
