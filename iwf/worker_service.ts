@@ -18,6 +18,7 @@ import { Communication } from "./communication.ts";
 import { toIdlCommandRequest } from "./command_request.ts";
 import { CommunicationMethodType } from "./communication_method_def.ts";
 import { toIdlDecision } from "./state_movement.ts";
+import { fromIdlCommandResults } from "./utils/command_results.ts";
 
 type Obj = {
   encodedObject: EncodedObject;
@@ -37,79 +38,79 @@ export class WorkerService {
     this.options = workerOptions;
   }
 
-  handleWorkflowWorkerRpc(
-    req: WorkflowWorkerRpcRequest,
-  ): WorkflowWorkerRpcResponse {
-    const method = this.registry.getWorkflowRPC(
-      req.workflowType,
-      req.rpcName,
-    );
-    if (method?.communicationMethod !== CommunicationMethodType.RPC_METHOD) {
-      throw new Error(`Method ${req.rpcName} not registered as RPC_METHOD`);
-    }
-    const input = this.options.objectEncoder.decode(req.input);
-    const ctx: WorkflowContext = {
-      ctx: req.context,
-      workflowId: req.ctx.workflowId,
-      workflowRunId: req.workflowRunId,
-      stateExecutionId: req.stateExecutionId,
-      attempt: req.attempt,
-      workflowStartTimestampSeconds: req.workflowStartTimestampSeconds,
-      firstAttemptTimestampSeconds: req.firstAttemptTimestampSeconds,
-    };
-    const pers = new Persistence(
-      this.options.objectEncoder,
-      this.registry.getWorkflowDataAttributesKeyStore(req.workflowType),
-      this.registry.getSearchAttributeTypeStore(req.workflowType),
-      req.dataObjects,
-      req.searchAttributes,
-      [],
-    );
-    const comm = new Communication(
-      this.options.objectEncoder,
-      this.registry.getWorkflowInternalChannelNameStore(req.workflowType),
-    );
-    const output = method.rpc(ctx, input, pers, comm);
-    const encodedOutput = this.options.objectEncoder.encode(output);
-    const res: WorkflowWorkerRpcResponse = {
-      output: encodedOutput,
-    };
-    const publishings = getToPublish(comm.toPublishInternalChannel);
-    if (publishings.length > 0) {
-      res.publishToInterStateChannel = publishings;
-    }
-    if (comm.getToTriggerStateMovements().length > 0) {
-      res.stateDecision = {
-        nextStates: toIdlDecision(
-          {
-            nextStates: comm.getToTriggerStateMovements(),
-          },
-          req.workflowType,
-          this.registry,
-          this.options.objectEncoder,
-        ),
-      };
-    }
-    const {
-      dataObjectsToReturn,
-      stateLocalToReturn,
-      recordEvents,
-      upsertSearchAttributes,
-    } = pers.getToReturn();
-    if (dataObjectsToReturn.length > 0) {
-      res.upsertDataObjects = dataObjectsToReturn;
-    }
-    if (stateLocalToReturn.length > 0) {
-      res.upsertStateLocals = stateLocalToReturn;
-    }
-    if (recordEvents.length > 0) {
-      res.recordEvents = stateLocalToReturn;
-    }
-    if (upsertSearchAttributes.length > 0) {
-      res.upsertSearchAttributes = upsertSearchAttributes;
-    }
-    return res;
-  }
+  //handleWorkflowWorkerRpc(
+  //  req: WorkflowWorkerRpcRequest,
+  //): WorkflowWorkerRpcResponse {
+  //  const method = this.registry.getWorkflowRPC(
+  //    req.workflowType,
+  //    req.rpcName,
+  //  );
+  //  if (method?.communicationMethod !== CommunicationMethodType.RPC_METHOD) {
+  //    throw new Error(`Method ${req.rpcName} not registered as RPC_METHOD`);
+  //  }
+  //  const input = this.options.objectEncoder.decode(req.input);
+  //  const ctx: WorkflowContext = {
+  //    ctx: req.context,
+  //    workflowId: req.ctx.workflowId,
+  //    workflowRunId: req.workflowRunId,
+  //    stateExecutionId: req.stateExecutionId,
+  //    attempt: req.attempt,
+  //    workflowStartTimestampSeconds: req.workflowStartTimestampSeconds,
+  //    firstAttemptTimestampSeconds: req.firstAttemptTimestampSeconds,
+  //  };
+  //  const pers = new Persistence(
+  //    this.options.objectEncoder,
+  //    this.registry.getWorkflowDataAttributesKeyStore(req.workflowType),
+  //    this.registry.getSearchAttributeTypeStore(req.workflowType),
+  //    req.dataObjects,
+  //    req.searchAttributes,
+  //    [],
+  //  );
+  //  const comm = new Communication(
+  //    this.options.objectEncoder,
+  //    this.registry.getWorkflowInternalChannelNameStore(req.workflowType),
+  //  );
+  //  const output = method.rpc(ctx, input, pers, comm);
+  //  const encodedOutput = this.options.objectEncoder.encode(output);
+  //  const res: WorkflowWorkerRpcResponse = {
+  //    output: encodedOutput,
+  //  };
+  //  const publishings = getToPublish(comm.toPublishInternalChannel);
+  //  if (publishings.length > 0) {
+  //    res.publishToInterStateChannel = publishings;
+  //  }
+  //  if (comm.getToTriggerStateMovements().length > 0) {
+  //    res.stateDecision = {
+  //      nextStates: toIdlDecision(
+  //        {
+  //          nextStates: comm.getToTriggerStateMovements(),
+  //        },
+  //        req.workflowType,
+  //        this.registry,
+  //        this.options.objectEncoder,
+  //      ),
+  //    };
+  //  }
+  //  const {
+  //    dataObjectsToReturn,
+  //    stateLocalToReturn,
+  //    recordEvents,
+  //    upsertSearchAttributes,
+  //  } = pers.getToReturn();
+  //  if (dataObjectsToReturn.length > 0) {
+  //    res.upsertDataObjects = dataObjectsToReturn;
+  //  }
+  //  if (stateLocalToReturn.length > 0) {
+  //    res.upsertStateLocals = stateLocalToReturn;
+  //  }
+  //  if (recordEvents.length > 0) {
+  //    res.recordEvents = stateLocalToReturn;
+  //  }
+  //  if (upsertSearchAttributes.length > 0) {
+  //    res.upsertSearchAttributes = upsertSearchAttributes;
+  //  }
+  //  return res;
+  //}
 
   handleWorkflowStateWaitUntil(
     request: WorkflowStateWaitUntilRequest,
@@ -195,23 +196,82 @@ export class WorkerService {
   }
 
   handleWorkflowStateExecute(
-    stateExecuteRequest: WorkflowStateExecuteRequest,
+    request: WorkflowStateExecuteRequest,
   ): WorkflowStateExecuteResponse {
     const state = this.registry.getWorkflowStateDef(
-      stateExecuteRequest.workflowType,
-      stateExecuteRequest.workflowStateId,
+      request.workflowType,
+      request.workflowStateId,
     );
     const input = this.options.objectEncoder.decode(
-      stateExecuteRequest.stateInput || {
+      request.stateInput || {
         encoding: "json",
         data: "",
       },
     );
     const ctx = fromIdlContext(
-      stateExecuteRequest.context,
-      stateExecuteRequest.workflowType,
+      request.context,
+      request.workflowType,
     );
-    return null;
+    const commandResults = fromIdlCommandResults(
+      request.commandResults,
+      this.options.objectEncoder,
+    );
+    const pers = new Persistence(
+      this.options.objectEncoder,
+      this.registry.getWorkflowDataAttributesKeyStore(
+        request.workflowType,
+      ),
+      this.registry.getSearchAttributeTypeStore(
+        request.workflowType,
+      ),
+      request.dataObjects,
+      request.searchAttributes,
+    );
+    const comm = new Communication(
+      this.options.objectEncoder,
+      this.registry.getWorkflowInternalChannelNameStore(
+        request.workflowType,
+      ),
+    );
+    const decision = state?.state.execute(
+      ctx,
+      input,
+      commandResults,
+      pers,
+      comm,
+    );
+    const idlDecision = toIdlDecision(
+      decision || { nextStates: [] },
+      request.workflowType,
+      this.registry,
+      this.options.objectEncoder,
+    );
+    const res: WorkflowStateExecuteResponse = {
+      stateDecision: idlDecision,
+    };
+    const publishings = getToPublish(comm.toPublishInternalChannel);
+    if (publishings.length > 0) {
+      res.publishToInterStateChannel = publishings;
+    }
+    const {
+      dataObjectsToReturn,
+      stateLocalToReturn,
+      recordEvents,
+      upsertSearchAttributes,
+    } = pers.getToReturn();
+    if (dataObjectsToReturn.length > 0) {
+      res.upsertDataObjects = dataObjectsToReturn;
+    }
+    if (stateLocalToReturn.length > 0) {
+      res.upsertStateLocals = stateLocalToReturn;
+    }
+    if (recordEvents.length > 0) {
+      res.recordEvents = recordEvents;
+    }
+    if (upsertSearchAttributes.length > 0) {
+      res.upsertSearchAttributes = upsertSearchAttributes;
+    }
+    return res;
   }
 }
 
@@ -227,16 +287,14 @@ function getToPublish(
   );
 }
 
-function fromIdlContext(ctx: Context, wfType: string): Context {
-  if (!ctx.attempt) {
-    ctx.attempt = -1;
-  }
-  if (!ctx.firstAttemptTimestamp) {
-    ctx.firstAttemptTimestamp = -1;
-  }
+function fromIdlContext(ctx: Context, wfType: string): WorkflowContext {
   return {
+    ctx,
     workflowId: ctx.workflowId,
-    workflowRunId: "",
-    workflowStartedTimestamp: 0,
+    workflowRunId: ctx.workflowRunId,
+    stateExecutionId: ctx.stateExecutionId || "",
+    workflowStartTimestampSeconds: ctx.workflowStartedTimestamp,
+    attempt: ctx.attempt || -1,
+    firstAttemptTimestampSeconds: ctx.firstAttemptTimestamp || -1,
   };
 }

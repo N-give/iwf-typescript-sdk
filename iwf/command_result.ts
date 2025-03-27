@@ -20,34 +20,39 @@ export type InternalChannelCommandResult = {
 };
 
 export class CommandResults {
-  timers: TimerCommandResult[];
-  signals: SignalCommandResult[];
-  internalChannels: InternalChannelCommandResult[];
+  _timers: TimerCommandResult[];
+  _signals: SignalCommandResult[];
+  _internalChannels: InternalChannelCommandResult[];
   private _stateWaitUntilApiSucceeded: boolean;
 
-  constructor(stateWaitUntilApiSucceeded: boolean) {
-    this.timers = [];
-    this.signals = [];
-    this.internalChannels = [];
+  constructor(
+    timers: TimerCommandResult[] = [],
+    signals: SignalCommandResult[] = [],
+    internalChannels: InternalChannelCommandResult[] = [],
+    stateWaitUntilApiSucceeded: boolean = false,
+  ) {
+    this._timers = timers;
+    this._signals = signals;
+    this._internalChannels = internalChannels;
     this._stateWaitUntilApiSucceeded = stateWaitUntilApiSucceeded;
   }
 
   getTimerCommandResultById(
     commandId: string,
   ): TimerCommandResult | undefined {
-    return this.timers.find((t) => t.commandId === commandId);
+    return this._timers.find((t) => t.commandId === commandId);
   }
 
   getSignalCommandResultById(
     commandId: string,
   ): SignalCommandResult | undefined {
-    return this.signals.find((t) => t.commandId === commandId);
+    return this._signals.find((t) => t.commandId === commandId);
   }
 
   getInternalChannelCommandResultById(
     commandId: string,
   ): InternalChannelCommandResult | undefined {
-    return this.internalChannels.find((t) => t.commandId === commandId);
+    return this._internalChannels.find((t) => t.commandId === commandId);
   }
 
   get stateWaitUntilApiSucceeded(): boolean {

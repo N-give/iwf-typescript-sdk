@@ -48,11 +48,11 @@ export default async function routes(
     },
   );
 
-  fastify.post(
-    WORKFLOW_STATE_RPC_API_PATH,
-    async function rpc(req: unknown, _res: unknown) {
-      const rpcRequest = req.body as WorkflowWorkerRpcRequest;
-      return worker_service.handleWorkflowWorkerRpc(rpcRequest);
-    },
-  );
+  //fastify.post(
+  //  WORKFLOW_STATE_RPC_API_PATH,
+  //  async function rpc(req: unknown, _res: unknown) {
+  //    const rpcRequest = req.body as WorkflowWorkerRpcRequest;
+  //    return worker_service.handleWorkflowWorkerRpc(rpcRequest);
+  //  },
+  //);
 }
