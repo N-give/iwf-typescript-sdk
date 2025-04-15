@@ -22,7 +22,7 @@
             openapi-generator-cli
             typescript
             typescript-language-server
-            yarn
+            yarn-berry
           ];
         };
       }
