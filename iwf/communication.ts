@@ -27,7 +27,7 @@ export class Communication {
   }
 
   get toPublishInternalChannel(): Map<string, EncodedObject[]> {
-    return this.toPublishInternalChannel;
+    return this._toPublishInternalChannel;
   }
 
   publishToInternalChannel(channelName: string, value: unknown) {

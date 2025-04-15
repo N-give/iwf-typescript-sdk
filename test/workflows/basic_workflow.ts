@@ -1,18 +1,41 @@
+import {
+  CommandRequest,
+  emptyCommandRequest,
+} from "../../iwf/command_request.ts";
 import { CommandResults } from "../../iwf/command_result.ts";
 import { Communication } from "../../iwf/communication.ts";
 import { CommunicationMethodDef } from "../../iwf/communication_method_def.ts";
 import { Persistence } from "../../iwf/persistence.ts";
 import { PersistenceFieldDef } from "../../iwf/persistence_def.ts";
-import { StateDecision } from "../../iwf/state_decision.ts";
-import { StateDef } from "../../iwf/state_def.ts";
+import {
+  gracefulCompleteWorkflow,
+  singleNextState,
+  StateDecision,
+} from "../../iwf/state_decision.ts";
+import {
+  nonStartingStateDef,
+  startingStateDef,
+  StateDef,
+} from "../../iwf/state_def.ts";
 import { IWorkflow } from "../../iwf/workflow.ts";
 import { WorkflowContext } from "../../iwf/workflow_context.ts";
 import { IWorkflowState } from "../../iwf/workflow_state.ts";
 
-class BasicState implements IWorkflowState {
+class BasicState2 implements IWorkflowState {
   getStateId(): string {
-    return "TestState";
+    return "TestState2";
   }
+
+  waitUntil(
+    ctx: WorkflowContext,
+    input: unknown,
+    persistence: Persistence,
+    communication: Communication,
+  ): CommandRequest {
+    console.log(`${this.getStateId()} wait until`);
+    return emptyCommandRequest();
+  }
+
   execute(
     ctx: WorkflowContext,
     input: unknown,
@@ -20,10 +43,8 @@ class BasicState implements IWorkflowState {
     persistence: Persistence,
     communication: Communication,
   ): StateDecision {
-    console.log("test state running");
-    return {
-      nextStates: [],
-    };
+    console.log(`${this.getStateId()} execute`);
+    return gracefulCompleteWorkflow();
   }
 
   getStateOptions() {
@@ -31,15 +52,46 @@ class BasicState implements IWorkflowState {
   }
 }
 
-export const BASIC_STATE = new BasicState();
+export const BASIC_STATE_2 = new BasicState2();
+
+class BasicState1 implements IWorkflowState {
+  getStateId(): string {
+    return "TestState1";
+  }
+
+  waitUntil(
+    ctx: WorkflowContext,
+    input: unknown,
+    persistence: Persistence,
+    communication: Communication,
+  ): CommandRequest {
+    console.log(`${this.getStateId()} wait until`);
+    return emptyCommandRequest();
+  }
+
+  execute(
+    ctx: WorkflowContext,
+    input: unknown,
+    commandResults: CommandResults,
+    persistence: Persistence,
+    communication: Communication,
+  ): StateDecision {
+    console.log(`${this.getStateId()} execute`);
+    return singleNextState(BASIC_STATE_2);
+  }
+
+  getStateOptions() {
+    return undefined;
+  }
+}
+
+export const BASIC_STATE_1 = new BasicState1();
 
 class BasicWorkflow implements IWorkflow {
   getWorkflowStates(): StateDef[] {
     return [
-      {
-        state: BASIC_STATE,
-        canStartWorkflow: true,
-      },
+      startingStateDef(BASIC_STATE_1),
+      nonStartingStateDef(BASIC_STATE_2),
     ];
   }
   getPersistenceSchema(): PersistenceFieldDef[] {

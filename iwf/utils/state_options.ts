@@ -25,9 +25,7 @@ export function toIdlStateOptions(
       ?.executeApiSearchAttributesLoadingPolicy,
   };
 
-  if (skipWaitUntil) {
-    idlStateOptions.skipWaitUntil = true;
-  }
+  idlStateOptions.skipWaitUntil = skipWaitUntil;
 
   if (stateOptions?.executeApiFailureProceedState) {
     idlStateOptions.executeApiFailurePolicy =

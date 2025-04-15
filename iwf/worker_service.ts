@@ -198,16 +198,25 @@ export class WorkerService {
   handleWorkflowStateExecute(
     request: WorkflowStateExecuteRequest,
   ): WorkflowStateExecuteResponse {
+    console.log(`execute ${request.workflowStateId}`);
+    console.log(`${JSON.stringify(request, null, 2)}`);
     const state = this.registry.getWorkflowStateDef(
       request.workflowType,
       request.workflowStateId,
     );
+    if (!state) {
+      throw new Error(
+        `workflow (${request.workflowType}) missing state with id ${request.workflowStateId}`,
+      );
+    }
+    console.log(`state: ${state}`);
     const input = this.options.objectEncoder.decode(
       request.stateInput || {
         encoding: "json",
-        data: "",
+        data: "{}",
       },
     );
+    console.log(`input: ${input}`);
     const ctx = fromIdlContext(
       request.context,
       request.workflowType,
@@ -233,7 +242,7 @@ export class WorkerService {
         request.workflowType,
       ),
     );
-    const decision = state?.state.execute(
+    const decision = state.state.execute(
       ctx,
       input,
       commandResults,

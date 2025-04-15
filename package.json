@@ -8,7 +8,7 @@
     "build:all": "npm run gen && npm run build",
     "build": "tsc",
     "test": "node --test",
-    "gen": "openapi-generator-cli generate",
+    "gen": "openapi-generator-cli generate && openapi-typescript iwf-idl/iwf-sdk.yaml -o iwf-sdk.ts && yarn typed-openapi iwf-idl/iwf-sdk.yaml -o gen/api-schema.ts --runtime zod",
     "clean": "rm -rf ./gen && rm -rf ./dist"
   },
   "keywords": [],
@@ -19,8 +19,12 @@
     "@openapitools/openapi-generator-cli": "^2.16.3",
     "esm": "^3.2.25",
     "fastify": "^5.2.2",
+    "fastify-type-provider-zod": "^4.0.2",
     "iwfidl": "file:gen/iwfidl",
-    "tsx": "^4.19.3"
+    "openapi-typescript": "^7.6.1",
+    "tsx": "^4.19.3",
+    "typed-openapi": "^0.10.1",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@types/node": "^22.13.4",

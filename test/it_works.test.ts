@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { before, describe, it } from "node:test";
+import { after, before, describe, it } from "node:test";
 import { Client } from "../iwf/client.ts";
 import Fastify, { FastifyInstance } from "fastify";
 import { LOCAL_DEFAULT_CLIENT_OPTIONS } from "../iwf/client_options.ts";
@@ -21,37 +21,41 @@ describe("Basic workflow tests", () => {
       registry,
       LOCAL_DEFAULT_CLIENT_OPTIONS,
     );
+  });
+  after(async () => {
+    // fastify.close();
+  });
+
+  it("starts the test workflow", async () => {
     fastify = Fastify({
-      logger: true,
+      // logger: true,
     });
     fastify.register(routes);
     await fastify.listen({
       port: 8803,
+    }, async () => {
+      console.log("starting test...");
+      const ctx: Context = {
+        workflowId: "test-workflow-1",
+        workflowRunId: "run1",
+        workflowStartedTimestamp: 0,
+      };
+      const wfRunId = await client.startWorkflow(
+        ctx,
+        BASIC_WORKFLOW,
+        ctx.workflowId,
+        120,
+        {},
+        {
+          workflowIdReusePolicy: "ALLOW_IF_NO_RUNNING",
+          workflowCronSchedule: "",
+          workflowStartDelaySeconds: 0,
+          workflowRetryPolicy: {},
+          initialSearchAttributes: new Map(),
+        },
+      );
+
+      assert.ok(wfRunId, "Workflow Run Id should not be null");
     });
-  });
-
-  it("starts the test workflow", async () => {
-    console.log("starting test...");
-    const ctx: Context = {
-      workflowId: "test-workflow-1",
-      workflowRunId: "run1",
-      workflowStartedTimestamp: 0,
-    };
-    const wfRunId = await client.startWorkflow(
-      ctx,
-      BASIC_WORKFLOW,
-      ctx.workflowId,
-      120,
-      {},
-      {
-        workflowIdReusePolicy: "ALLOW_IF_NO_RUNNING",
-        workflowCronSchedule: "",
-        workflowStartDelaySeconds: 0,
-        workflowRetryPolicy: {},
-        initialSearchAttributes: new Map(),
-      },
-    );
-
-    assert.ok(wfRunId, "Workflow Run Id should not be null");
   });
 });

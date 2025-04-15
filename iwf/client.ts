@@ -291,7 +291,7 @@ export class Client {
     _workflowId: string,
     _workflowRunId: string,
     _config: WorkflowConfig,
-  ) { }
+  ) {}
 
   // GetSimpleWorkflowResult returns the result of a workflow execution, for simple case that only one WorkflowState completes with result
   // If there are more than one WorkflowStates complete with result, GetComplexWorkflowResults must be used instead

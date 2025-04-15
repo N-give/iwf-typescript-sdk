@@ -37,9 +37,11 @@ export class UnregisteredClient {
   ): Promise<string> {
     const encodedInput = this.options.objectEncoder.encode(input);
 
-    let stateOptions: WorkflowStateOptions | undefined;
+    let stateOptions: WorkflowStateOptions | undefined = {
+      skipWaitUntil: true,
+    };
     let workflowStartOptions: WorkflowStartOptions | undefined;
-    if (options !== null && options !== undefined) {
+    if (options) {
       options.initialSearchAttributes.forEach((sa) => {
         // propogate error if search attributes do not match
         getSearchAttributeValue(sa);
@@ -77,6 +79,7 @@ export class UnregisteredClient {
       },
     };
 
+    console.log("start request: ", request);
     const response = await this.defaultApi.apiV1WorkflowStartPost(request);
     return response.workflowRunId || "workflowRunId";
   }

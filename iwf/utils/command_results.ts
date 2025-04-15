@@ -15,7 +15,7 @@ import {
 export function fromIdlCommandResults(
   commandResults: IdlCommandResults = {
     signalResults: [],
-    InterStateChannelResults: [],
+    interStateChannelResults: [],
     timerResults: [],
     stateStartApiSucceeded: false,
   },
