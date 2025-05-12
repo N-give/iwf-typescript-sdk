@@ -9,6 +9,7 @@ import { CommunicationMethodDef } from "../../iwf/communication_method_def.ts";
 import { Persistence } from "../../iwf/persistence.ts";
 import {
   dataAttributeDef,
+  dataAttributePrefix,
   PersistenceFieldDef,
 } from "../../iwf/persistence_def.ts";
 import {
@@ -40,6 +41,7 @@ class BasicPersistenceState implements IWorkflowState {
   ): CommandRequest {
     console.log(`${ctx.stateExecutionId} wait until ${ctx.attempt}`);
     persistence.setDataAttribute(TEST_DATA_ATTRIBUTE_MODEL_1, ctx.ctx);
+    persistence.setDataAttribute(`${TEST_DATA_ATTRIBUTE_PREFIX}-1234`, 1234);
     return emptyCommandRequest();
   }
 
@@ -53,6 +55,10 @@ class BasicPersistenceState implements IWorkflowState {
     console.log(`${ctx.stateExecutionId} execute ${ctx.attempt}`);
     const da = persistence.getDataAttribute(TEST_DATA_ATTRIBUTE_MODEL_1);
     console.log(da);
+    const daLong = persistence.getDataAttribute(
+      `${TEST_DATA_ATTRIBUTE_PREFIX}-1234`,
+    );
+    console.log(daLong);
     return gracefulCompleteWorkflow();
   }
 
@@ -65,6 +71,7 @@ export const BASIC_PERSISTENCE_STATE = new BasicPersistenceState();
 
 const InitDASchema = z.string();
 const TestDAKey = z.string();
+const TestDALong = z.number();
 
 export const TEST_INIT_DATA_ATTRIBUTE_KEY = "test-init-data-object-key";
 export const TEST_DATA_ATTRIBUTE_KEY = "test-data-object-key";
@@ -99,6 +106,10 @@ class BasicPersistenceWorkflow implements IWorkflow {
         <V>(v: unknown) => Context.parse(v) as V,
       ),
       // dataAttributeDef(TEST_DATA_ATTRIBUTE_MODEL_2),
+      dataAttributePrefix(
+        TEST_DATA_ATTRIBUTE_PREFIX,
+        <V>(v: unknown) => TestDALong.parse(v) as V,
+      ),
     ];
   }
   getCommunicationSchema(): CommunicationMethodDef<
