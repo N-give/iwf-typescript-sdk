@@ -11,11 +11,13 @@ import {
   matchesSearchAttributeType,
   SearchAtributeTypeMapper,
 } from "./utils/search_attributes.ts";
+import { TypeStore } from "./type_store.ts";
+import { DataSources } from "./data_sources.ts";
 
 export class Persistence {
   encoder: IObjectEncoder;
 
-  dataAttrsKeyMap: Map<string, boolean>;
+  dataAttrsKeyMap: TypeStore<DataSources.DATA_ATTRIBUTE>;
   currentDataAttributes: Map<string, EncodedObject>;
   dataAttributesToReturn: Map<string, EncodedObject>;
 
@@ -35,7 +37,9 @@ export class Persistence {
 
   constructor(
     encoder: IObjectEncoder,
-    dataAttrsKeyMap: Map<string, boolean> = new Map(),
+    dataAttrsKeyMap: TypeStore<DataSources.DATA_ATTRIBUTE> = new TypeStore(
+      DataSources.DATA_ATTRIBUTE,
+    ),
     saKeyToType: Map<string, SearchAttributeValueType> = new Map(),
     dataObjects: KeyValue[] = [],
     searchAttributes: SearchAttribute[] = [],
@@ -70,6 +74,7 @@ export class Persistence {
       [SearchAttributeValueType.Datetime, new Map()],
     ]);
 
+    console.log(dataObjects);
     dataObjects.forEach((d) => {
       this.currentDataAttributes.set(d.key || `${d}`, d.value!);
     });
@@ -89,20 +94,54 @@ export class Persistence {
   }
 
   getDataAttribute(key: string): unknown {
-    if (!this.dataAttrsKeyMap.has(key)) {
+    const [isValidKey, validateData] = this.dataAttrsKeyMap.validateKeyAndData(
+      key,
+    );
+    if (!isValidKey) {
       throw new Error(`key ${key} is not regestered as a data object`);
     }
     const encoded = this.currentDataAttributes.get(key);
+
     if (!encoded) {
       throw new Error(`key ${key} does not contain any data`);
     }
-    return this.encoder.decode(encoded);
+    const decoded = this.encoder.decode(encoded);
+    if (!validateData(decoded)) {
+      console.log(
+        `invalid decoded value ${
+          JSON.stringify(decoded, null, 2)
+        } for data attribute ${key}`,
+      );
+      console.log(decoded);
+      throw new Error(
+        `registered type does not match value ${
+          JSON.stringify(decoded, null, 2)
+        } for data attribute ${key}`,
+      );
+    }
+    return decoded;
   }
 
   setDataAttribute(key: string, value: unknown) {
-    if (!this.dataAttrsKeyMap.has(key)) {
+    const [isValidKey, validateData] = this.dataAttrsKeyMap.validateKeyAndData(
+      key,
+    );
+    if (!isValidKey) {
       throw new Error(`key ${key} is not regestered as a data object`);
     }
+    if (!validateData(value)) {
+      throw new Error(
+        `value ${
+          JSON.stringify(value, null, 2)
+        } does not match registered type for data attribute ${key}`,
+      );
+    }
+    console.log(
+      `setting value ${
+        JSON.stringify(value, null, 2)
+      } for data attribute ${key}`,
+    );
+    console.log(value);
     const encoded = this.encoder.encode(value);
     this.dataAttributesToReturn.set(key, encoded);
     this.currentDataAttributes.set(key, encoded);

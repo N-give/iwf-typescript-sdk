@@ -53,6 +53,7 @@ export class UnregisteredClient {
         workflowStartDelaySeconds: options.workflowStartDelaySeconds,
         retryPolicy: options.workflowRetryPolicy,
         searchAttributes: options.initialSearchAttributes,
+        dataAttributes: options.initialDataAttributes,
       };
     }
 
@@ -79,7 +80,6 @@ export class UnregisteredClient {
       },
     };
 
-    console.log("start request: ", request);
     const response = await this.defaultApi.apiV1WorkflowStartPost(request);
     return response.workflowRunId || "workflowRunId";
   }

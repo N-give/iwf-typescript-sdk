@@ -6,8 +6,8 @@ import {
   WorkflowStateExecuteResponse,
   WorkflowStateWaitUntilRequest,
   WorkflowStateWaitUntilResponse,
-  WorkflowWorkerRpcRequest,
-  WorkflowWorkerRpcResponse,
+  // WorkflowWorkerRpcRequest,
+  // WorkflowWorkerRpcResponse,
 } from "iwfidl";
 import { Registry } from "./registry.ts";
 import { IObjectEncoder } from "./object_encoder.ts";
@@ -16,7 +16,6 @@ import { WorkflowContext } from "./workflow_context.ts";
 import { Persistence } from "./persistence.ts";
 import { Communication } from "./communication.ts";
 import { toIdlCommandRequest } from "./command_request.ts";
-import { CommunicationMethodType } from "./communication_method_def.ts";
 import { toIdlDecision } from "./state_movement.ts";
 import { fromIdlCommandResults } from "./utils/command_results.ts";
 
@@ -30,12 +29,12 @@ export const WORKFLOW_STATE_EXECUTE_API_PATH = "/api/v1/workflowState/decide";
 export const WORKFLOW_STATE_RPC_API_PATH = "/api/v1/workflowState/rpc";
 
 export class WorkerService {
-  registry: Registry;
-  options: WorkerOptions;
+  #registry: Registry;
+  #options: WorkerOptions;
 
   constructor(registry: Registry, workerOptions: WorkerOptions) {
-    this.registry = registry;
-    this.options = workerOptions;
+    this.#registry = registry;
+    this.#options = workerOptions;
   }
 
   //handleWorkflowWorkerRpc(
@@ -116,7 +115,7 @@ export class WorkerService {
     request: WorkflowStateWaitUntilRequest,
   ): WorkflowStateWaitUntilResponse {
     const wfType = request.workflowType;
-    const stateDef = this.registry.getWorkflowStateDef(
+    const stateDef = this.#registry.getWorkflowStateDef(
       wfType,
       request.workflowStateId,
     );
@@ -127,7 +126,7 @@ export class WorkerService {
     }
     const input: Obj = {
       encodedObject: request.stateInput || {},
-      objectEncoder: this.options.objectEncoder,
+      objectEncoder: this.#options.objectEncoder,
     };
     const ctx: WorkflowContext = {
       ctx: request.context,
@@ -140,16 +139,16 @@ export class WorkerService {
         Date.now(),
     };
     const persistence = new Persistence(
-      this.options.objectEncoder,
-      this.registry.getWorkflowDataAttributesKeyStore(wfType),
-      this.registry.getSearchAttributeTypeStore(wfType),
+      this.#options.objectEncoder,
+      this.#registry.getWorkflowDataAttributesKeyStore(wfType),
+      this.#registry.getSearchAttributeTypeStore(wfType),
       request.dataObjects,
       request.searchAttributes,
       [],
     );
     const communication = new Communication(
-      this.options.objectEncoder,
-      this.registry.getWorkflowInternalChannelNameStore(wfType),
+      this.#options.objectEncoder,
+      this.#registry.getWorkflowInternalChannelNameStore(wfType),
     );
     if (!stateDef.state.waitUntil) {
       throw new Error(
@@ -198,9 +197,8 @@ export class WorkerService {
   handleWorkflowStateExecute(
     request: WorkflowStateExecuteRequest,
   ): WorkflowStateExecuteResponse {
-    console.log(`execute ${request.workflowStateId}`);
-    console.log(`${JSON.stringify(request, null, 2)}`);
-    const state = this.registry.getWorkflowStateDef(
+    console.log(request);
+    const state = this.#registry.getWorkflowStateDef(
       request.workflowType,
       request.workflowStateId,
     );
@@ -209,36 +207,33 @@ export class WorkerService {
         `workflow (${request.workflowType}) missing state with id ${request.workflowStateId}`,
       );
     }
-    console.log(`state: ${state}`);
-    const input = this.options.objectEncoder.decode(
+    const input = this.#options.objectEncoder.decode(
       request.stateInput || {
         encoding: "json",
-        data: "{}",
       },
     );
-    console.log(`input: ${input}`);
     const ctx = fromIdlContext(
       request.context,
       request.workflowType,
     );
     const commandResults = fromIdlCommandResults(
       request.commandResults,
-      this.options.objectEncoder,
+      this.#options.objectEncoder,
     );
     const pers = new Persistence(
-      this.options.objectEncoder,
-      this.registry.getWorkflowDataAttributesKeyStore(
+      this.#options.objectEncoder,
+      this.#registry.getWorkflowDataAttributesKeyStore(
         request.workflowType,
       ),
-      this.registry.getSearchAttributeTypeStore(
+      this.#registry.getSearchAttributeTypeStore(
         request.workflowType,
       ),
       request.dataObjects,
       request.searchAttributes,
     );
     const comm = new Communication(
-      this.options.objectEncoder,
-      this.registry.getWorkflowInternalChannelNameStore(
+      this.#options.objectEncoder,
+      this.#registry.getWorkflowInternalChannelNameStore(
         request.workflowType,
       ),
     );
@@ -252,8 +247,8 @@ export class WorkerService {
     const idlDecision = toIdlDecision(
       decision || { nextStates: [] },
       request.workflowType,
-      this.registry,
-      this.options.objectEncoder,
+      this.#registry,
+      this.#options.objectEncoder,
     );
     const res: WorkflowStateExecuteResponse = {
       stateDecision: idlDecision,

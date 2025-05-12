@@ -5,6 +5,7 @@ import {
 import { CommandResults } from "../../iwf/command_result.ts";
 import { Communication } from "../../iwf/communication.ts";
 import { CommunicationMethodDef } from "../../iwf/communication_method_def.ts";
+import { DataSources } from "../../iwf/data_sources.ts";
 import { Persistence } from "../../iwf/persistence.ts";
 import { PersistenceFieldDef } from "../../iwf/persistence_def.ts";
 import {
@@ -32,7 +33,7 @@ class BasicState2 implements IWorkflowState {
     persistence: Persistence,
     communication: Communication,
   ): CommandRequest {
-    console.log(`${this.getStateId()} wait until`);
+    console.log(`${ctx.stateExecutionId} wait until ${ctx.attempt}`);
     return emptyCommandRequest();
   }
 
@@ -43,7 +44,7 @@ class BasicState2 implements IWorkflowState {
     persistence: Persistence,
     communication: Communication,
   ): StateDecision {
-    console.log(`${this.getStateId()} execute`);
+    console.log(`${ctx.stateExecutionId} execute ${ctx.attempt}`);
     return gracefulCompleteWorkflow();
   }
 
@@ -65,7 +66,7 @@ class BasicState1 implements IWorkflowState {
     persistence: Persistence,
     communication: Communication,
   ): CommandRequest {
-    console.log(`${this.getStateId()} wait until`);
+    console.log(`${ctx.stateExecutionId} wait until ${ctx.attempt}`);
     return emptyCommandRequest();
   }
 
@@ -76,7 +77,7 @@ class BasicState1 implements IWorkflowState {
     persistence: Persistence,
     communication: Communication,
   ): StateDecision {
-    console.log(`${this.getStateId()} execute`);
+    console.log(`${ctx.stateExecutionId} execute ${ctx.attempt}`);
     return singleNextState(BASIC_STATE_2);
   }
 
@@ -94,14 +95,20 @@ class BasicWorkflow implements IWorkflow {
       nonStartingStateDef(BASIC_STATE_2),
     ];
   }
-  getPersistenceSchema(): PersistenceFieldDef[] {
+  getPersistenceSchema(): PersistenceFieldDef<
+    DataSources.DATA_ATTRIBUTE | DataSources.SEARCH_ATTRIBUTE
+  >[] {
     return [];
   }
-  getCommunicationSchema(): CommunicationMethodDef[] {
+  getCommunicationSchema(): CommunicationMethodDef<
+    | DataSources.SIGNAL_CHANNEL
+    | DataSources.INTERNAL_CHANNEL
+    | DataSources.RPC_METHOD
+  >[] {
     return [];
   }
   getWorkflowType(): string {
-    return "TestWorkflow";
+    return "BasicWorkflow";
   }
 }
 

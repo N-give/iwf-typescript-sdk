@@ -2,6 +2,7 @@ import {
   Configuration,
   Context,
   DefaultApi,
+  KeyValue,
   SearchAttribute,
   SearchAttributeValueType,
   StateCompletionOutput,
@@ -26,11 +27,13 @@ import { toIdlStateOptions } from "./utils/state_options.ts";
 import { shouldSkipWaitUntilApi } from "./utils/workflow_state.ts";
 import { getSearchAttributeValue } from "./utils/search_attributes.ts";
 import { RPC } from "./rpc.ts";
+import { TypeStore } from "./type_store.ts";
+import { DataSources } from "./data_sources.ts";
 
 export class Client {
-  unregisteredClient: UnregisteredClient;
-  registry: Registry;
-  options: ClientOptions;
+  #unregisteredClient: UnregisteredClient;
+  #registry: Registry;
+  #options: ClientOptions;
 
   constructor(
     registry: Registry,
@@ -52,9 +55,9 @@ export class Client {
       // credentials?: RequestCredentials;
     });
     const defaultApi = new DefaultApi(configuration);
-    this.registry = registry;
-    this.options = options;
-    this.unregisteredClient = new UnregisteredClient(defaultApi, options);
+    this.#registry = registry;
+    this.#options = options;
+    this.#unregisteredClient = new UnregisteredClient(defaultApi, options);
   }
 
   startWorkflow(
@@ -66,18 +69,18 @@ export class Client {
     options: WorkflowOptions,
   ): Promise<string> {
     const wfType = getFinalWorkflowType(workflow);
-    const wf = this.registry.getWorkflow(wfType);
+    const wf = this.#registry.getWorkflow(wfType);
     if (wf === null || wf === undefined) {
       throw new Error("Worflow is not registered");
     }
 
-    const startingState = this.registry.getWorkflowStartingState(wfType);
+    const startingState = this.#registry.getWorkflowStartingState(wfType);
     if (startingState === null || startingState === undefined) {
       throw new Error(`workflow ${wfType} does not have a starting state`);
     }
 
     const startStartId = getFinalWorkflowStateId(startingState);
-    const saTypes = this.registry.getSearchAttributeTypeStore(wfType) ||
+    const saTypes = this.#registry.getSearchAttributeTypeStore(wfType) ||
       new Map();
     const unregisteredOptions: UnregisteredWorkflowOptions = {
       workflowIdReusePolicy: options.workflowIdReusePolicy,
@@ -92,9 +95,14 @@ export class Client {
         saTypes,
         options.initialSearchAttributes,
       ),
+      initialDataAttributes: this.#checkInitialDataAttributes(
+        this.#registry.getWorkflowDataAttributesKeyStore(wfType) ||
+          new TypeStore<DataSources.DATA_ATTRIBUTE>(DataSources.DATA_ATTRIBUTE),
+        options.initialDataAttributes,
+      ),
     };
 
-    return this.unregisteredClient.startWorkflow(
+    return this.#unregisteredClient.startWorkflow(
       ctx,
       wfType,
       startStartId,
@@ -103,6 +111,29 @@ export class Client {
       input,
       unregisteredOptions,
     );
+  }
+
+  #checkInitialDataAttributes(
+    daTypeStore: TypeStore<DataSources.DATA_ATTRIBUTE>,
+    initialDataAttributes: Map<string, unknown>,
+  ): KeyValue[] {
+    const das: KeyValue[] = [];
+    initialDataAttributes.entries().forEach(([key, value]) => {
+      const [isValidKey, validateData] = daTypeStore.validateKeyAndData(key);
+      if (!isValidKey) {
+        throw new Error(`data attribute ${key} not registered`);
+      }
+      if (!validateData(value)) {
+        throw new Error(
+          `value ${value} does not match type registered for data attribute ${key} `,
+        );
+      }
+      das.push({
+        key,
+        value: this.#options.objectEncoder.encode(value),
+      });
+    });
+    return das;
   }
 
   // SignalWorkflow signals a workflow execution
@@ -117,13 +148,13 @@ export class Client {
     signalValue: unknown,
   ) {
     const wfType = getFinalWorkflowType(workflow);
-    const signalNameStore = this.registry.getSignalNameStore(wfType);
-    if (!signalNameStore?.has(signalChannelName)) {
+    const signalNameStore = this.#registry.getSignalNameStore(wfType);
+    if (!signalNameStore?.validateKey(signalChannelName)) {
       throw new Error(
         `signal channel ${signalChannelName} is not defined in workflow type ${wfType}`,
       );
     }
-    return this.unregisteredClient.signalWorkflow(
+    return this.#unregisteredClient.signalWorkflow(
       ctx,
       workflowId,
       workflowRunId,
@@ -143,13 +174,13 @@ export class Client {
     keys: string[],
   ): Map<string, unknown> {
     const wfType = getFinalWorkflowType(workflow);
-    const typeMap = this.registry.getWorkflowDataAttributesKeyStore(wfType);
+    const typeMap = this.#registry.getWorkflowDataAttributesKeyStore(wfType);
     keys.forEach((key) => {
-      if (!typeMap?.has(key)) {
-        throw new Error(`data object type ${key} is not registered`);
+      if (!typeMap?.validateKey(key)) {
+        throw new Error(`data object type ${key} is not valid`);
       }
     });
-    return this.unregisteredClient.getWorkflowDataAttributes(
+    return this.#unregisteredClient.getWorkflowDataAttributes(
       ctx,
       workflowId,
       workflowRunId,
@@ -168,7 +199,7 @@ export class Client {
     keys: string[],
   ): Map<string, unknown> {
     const wfType = getFinalWorkflowType(workflow);
-    const typeMap = this.registry.getSearchAttributeTypeStore(wfType);
+    const typeMap = this.#registry.getSearchAttributeTypeStore(wfType);
     if (!typeMap) {
       throw new Error(`workflow type ${wfType} is not regestered`);
     }
@@ -182,7 +213,7 @@ export class Client {
           };
         }),
     );
-    const vals = this.unregisteredClient.getWorkflowSearchAttributes(
+    const vals = this.#unregisteredClient.getWorkflowSearchAttributes(
       ctx,
       workflowId,
       workflowRunId,
@@ -205,7 +236,7 @@ export class Client {
     workflowRunId: string,
   ): Map<string, unknown> {
     const wfType = getFinalWorkflowType(workflow);
-    const typeMap = this.registry.getSearchAttributeTypeStore(wfType);
+    const typeMap = this.#registry.getSearchAttributeTypeStore(wfType);
     if (!typeMap) {
       throw new Error(`workflow type ${wfType} is not regestered`);
     }
@@ -229,7 +260,7 @@ export class Client {
     timerCommandId: string,
   ) {
     const stateId = getFinalWorkflowStateId(workflowState);
-    return this.unregisteredClient.skipTimerByCommandId(
+    return this.#unregisteredClient.skipTimerByCommandId(
       ctx,
       workflowId,
       workflowRunId,
@@ -249,7 +280,7 @@ export class Client {
     timerCommandIndex: number,
   ) {
     const stateId = getFinalWorkflowStateId(workflowState);
-    return this.unregisteredClient.skipTimerByCommandIndex(
+    return this.#unregisteredClient.skipTimerByCommandIndex(
       ctx,
       workflowId,
       workflowRunId,

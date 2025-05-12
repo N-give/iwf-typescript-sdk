@@ -13,12 +13,12 @@ import {
 } from "../iwf/worker_service.ts";
 import {
   WorkflowStateExecuteRequest,
+  WorkflowStateExecuteRequestFromJSON,
   WorkflowStateExecuteResponse,
   WorkflowStateWaitUntilRequest,
   WorkflowStateWaitUntilResponse,
   WorkflowWorkerRpcRequest,
 } from "iwfidl";
-import { Registry } from "../iwf/registry.ts";
 import { WorkerOptions } from "../iwf/worker_options.ts";
 import { DEFAULT_ENCODER } from "../iwf/default_encoder.ts";
 import {
@@ -26,25 +26,12 @@ import {
   validatorCompiler,
   ZodTypeProvider,
 } from "fastify-type-provider-zod";
-import { ALL_WORKFLOWS } from "./workflows/index.ts";
-import { z } from "zod";
+import { REGISTRY } from "./registry.ts";
 
 const options: WorkerOptions = {
   objectEncoder: DEFAULT_ENCODER,
 };
-const registry: Registry = new Registry();
-registry.addWorkflows(...ALL_WORKFLOWS);
-const worker_service: WorkerService = new WorkerService(registry, options);
-
-const fastify: FastifyInstance = Fastify({
-  logger: true,
-});
-
-// const encodedObjectSchema = z.object({
-//   encoding: z.string(),
-// });
-//
-// const waitUntilSchema = z.object({});
+const worker_service: WorkerService = new WorkerService(REGISTRY, options);
 
 const schema = {
   "$defs": {
@@ -130,10 +117,6 @@ const schema = {
   },
 };
 
-// type IWorkflowStateWaitUntilRequest = Static<
-//   typeof schemas.WorkflowStateWaitUntilRequest
-// >;
-
 export default function routes(
   fastify: FastifyInstance,
   options: unknown,
@@ -179,7 +162,8 @@ export default function routes(
       req,
       res,
     ) {
-      res.send(worker_service.handleWorkflowStateExecute(req.body));
+      const execReq = WorkflowStateExecuteRequestFromJSON(req.body);
+      res.send(worker_service.handleWorkflowStateExecute(execReq));
     },
   );
 

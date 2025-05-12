@@ -12,7 +12,6 @@ export const DEFAULT_ENCODER: IObjectEncoder = {
     };
   },
   decode: function (encoded: EncodedObject): unknown {
-    console.log(`${JSON.stringify(encoded, null, 2)}`);
-    return JSON.parse(encoded.data || "{}");
+    return encoded.data ? JSON.parse(encoded.data || "") : null;
   },
 };

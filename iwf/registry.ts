@@ -1,21 +1,31 @@
 import { SearchAttributeValueType } from "iwfidl";
-import {
-  CommunicationMethodDef,
-  CommunicationMethodType,
-} from "./communication_method_def.ts";
-import { PersistenceFieldType } from "./persistence_def.ts";
+import { CommunicationMethodDef } from "./communication_method_def.ts";
 import { getFinalWorkflowType, IWorkflow } from "./workflow.ts";
 import { getFinalWorkflowStateId, IWorkflowState } from "./workflow_state.ts";
 import { StateDef } from "./state_def.ts";
+import { TypeStore } from "./type_store.ts";
+import { DataSources } from "./data_sources.ts";
 
 export class Registry {
   private _workflows: Map<string, IWorkflow>;
   private _startingStates: Map<string, IWorkflowState>;
   private _states: Map<string, Map<string, StateDef>>;
-  private _rpcNameStore: Map<string, Map<string, CommunicationMethodDef>>;
-  private _signalNameStore: Map<string, Map<string, boolean>>;
-  private _internalChannels: Map<string, Map<string, boolean>>;
-  private _dataAttributeKeys: Map<string, Map<string, boolean>>;
+  private _rpcNameStore: Map<
+    string,
+    Map<string, CommunicationMethodDef<DataSources.RPC_METHOD>>
+  >;
+  private _signalNameStore: Map<
+    string,
+    TypeStore<DataSources.SIGNAL_CHANNEL>
+  >;
+  private _internalChannels: Map<
+    string,
+    TypeStore<DataSources.INTERNAL_CHANNEL>
+  >;
+  private _dataAttributeKeys: Map<
+    string,
+    TypeStore<DataSources.DATA_ATTRIBUTE>
+  >;
   private _searchAttributeTypes: Map<
     string,
     Map<string, SearchAttributeValueType>
@@ -84,22 +94,22 @@ export class Registry {
 
   registerWorkflowCommunicationSchema(w: IWorkflow) {
     const wfType = getFinalWorkflowType(w);
-    const signalMap = new Map();
-    const internalMap = new Map();
+    const signalMap = new TypeStore(DataSources.SIGNAL_CHANNEL);
+    const internalMap = new TypeStore(DataSources.INTERNAL_CHANNEL);
     const rpcMap = new Map();
 
     w.getCommunicationSchema().forEach((methodDef) => {
       const communicationMethod = methodDef.communicationMethod;
       switch (communicationMethod) {
-        case CommunicationMethodType.SIGNAL_CHANNEL:
-          signalMap.set(methodDef.name, true);
+        case DataSources.SIGNAL_CHANNEL:
+          signalMap.addToTypeStore(methodDef);
           break;
 
-        case CommunicationMethodType.INTERNAL_CHANNEL:
-          internalMap.set(methodDef.name, true);
+        case DataSources.INTERNAL_CHANNEL:
+          internalMap.addToTypeStore(methodDef);
           break;
 
-        case CommunicationMethodType.RPC_METHOD:
+        case DataSources.RPC_METHOD:
           rpcMap.set(methodDef.name, methodDef);
           break;
 
@@ -116,19 +126,19 @@ export class Registry {
 
   registerWorkflowPersistenceSchema(w: IWorkflow) {
     const wfType = getFinalWorkflowType(w);
-    const dataAttrsKeys = new Map();
+    const dataAttrsKeys = new TypeStore(DataSources.DATA_ATTRIBUTE);
     const searchAttributes = new Map();
 
     w.getPersistenceSchema().forEach((p) => {
       const fieldType = p.fieldType;
       const key = p.key;
       switch (fieldType) {
-        case PersistenceFieldType.DATA_ATTRIBUTE:
-          dataAttrsKeys.set(key, true);
+        case DataSources.DATA_ATTRIBUTE:
+          dataAttrsKeys.addToTypeStore(p);
           break;
 
-        case PersistenceFieldType.SEARCH_ATTRIBUTE:
-          searchAttributes.set(key, PersistenceFieldType.SEARCH_ATTRIBUTE);
+        case DataSources.SEARCH_ATTRIBUTE:
+          searchAttributes.set(key, DataSources.SEARCH_ATTRIBUTE);
           break;
 
         default:
@@ -153,19 +163,21 @@ export class Registry {
     return this._states.get(wfType)?.get(id);
   }
 
-  getSignalNameStore(wfType: string): Map<string, boolean> | undefined {
+  getSignalNameStore(
+    wfType: string,
+  ): TypeStore<DataSources.SIGNAL_CHANNEL> | undefined {
     return this._signalNameStore.get(wfType);
   }
 
   getWorkflowInternalChannelNameStore(
     wfType: string,
-  ): Map<string, boolean> | undefined {
+  ): TypeStore<DataSources.INTERNAL_CHANNEL> | undefined {
     return this._internalChannels.get(wfType);
   }
 
   getWorkflowDataAttributesKeyStore(
     wfType: string,
-  ): Map<string, boolean> | undefined {
+  ): TypeStore<DataSources.DATA_ATTRIBUTE> | undefined {
     return this._dataAttributeKeys.get(wfType);
   }
 
@@ -178,7 +190,7 @@ export class Registry {
   getWorkflowRPC(
     wfType: string,
     rpcMethod: string,
-  ): CommunicationMethodDef | undefined {
+  ): CommunicationMethodDef<DataSources.RPC_METHOD> | undefined {
     return this._rpcNameStore.get(wfType)?.get(rpcMethod);
   }
 

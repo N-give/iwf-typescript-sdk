@@ -1,4 +1,5 @@
 import { CommunicationMethodDef } from "./communication_method_def.ts";
+import { DataSources } from "./data_sources.ts";
 import { PersistenceFieldDef } from "./persistence_def.ts";
 import { StateDef } from "./state_def.ts";
 
@@ -23,7 +24,10 @@ export interface IWorkflow {
   // Search attributes can be read/upsert in WorkflowState WaitUntil/Execute API
   // Search attributes can also be read by GetSearchAttributes Client API by external applications.
   // External applications can also use "SearchWorkflow" API to find workflows by SQL-like query
-  getPersistenceSchema(): PersistenceFieldDef[];
+  getPersistenceSchema(): PersistenceFieldDef<
+    | DataSources.DATA_ATTRIBUTE
+    | DataSources.SEARCH_ATTRIBUTE
+  >[];
 
   // GetCommunicationSchema defines all the communication methods for this workflow, this includes
   // 1. Signal channel
@@ -36,7 +40,11 @@ export interface IWorkflow {
   // InterStateChannel is for synchronization communications between WorkflowStates.
   // E.g. WorkflowStateA will continue after receiving a value from WorkflowStateB
   ///
-  getCommunicationSchema(): CommunicationMethodDef[];
+  getCommunicationSchema(): CommunicationMethodDef<
+    | DataSources.SIGNAL_CHANNEL
+    | DataSources.INTERNAL_CHANNEL
+    | DataSources.RPC_METHOD
+  >[];
 
   // GetWorkflowType Define the workflowType of this workflow definition.
   // See GetFinalWorkflowType for default value when return empty string.

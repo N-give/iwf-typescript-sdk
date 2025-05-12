@@ -1,4 +1,4 @@
-import { IDReusePolicy, WorkflowRetryPolicy } from "iwfidl";
+import { IDReusePolicy, SearchAttribute, WorkflowRetryPolicy } from "iwfidl";
 
 export type WorkflowOptions = {
   workflowIdReusePolicy: IDReusePolicy;
@@ -8,5 +8,6 @@ export type WorkflowOptions = {
   // InitialSearchAttributes set the initial search attributes to start a workflow
   // key is search attribute key, value much match with PersistenceSchema of the workflow definition
   // For iwfidl.DATETIME , the value can be either time.Time or a string value in format of DateTimeFormat
-  initialSearchAttributes: Map<string, unknown>;
+  initialSearchAttributes: Map<string, SearchAttribute>;
+  initialDataAttributes: Map<string, unknown>;
 };

@@ -1,5 +1,6 @@
 import {
   IDReusePolicy,
+  KeyValue,
   SearchAttribute,
   WorkflowRetryPolicy,
   WorkflowStateOptions,
@@ -12,4 +13,5 @@ export type UnregisteredWorkflowOptions = {
   workflowRetryPolicy: WorkflowRetryPolicy;
   startStateOptions: WorkflowStateOptions;
   initialSearchAttributes: SearchAttribute[];
+  initialDataAttributes: KeyValue[];
 };

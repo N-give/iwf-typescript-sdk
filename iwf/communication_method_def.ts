@@ -1,37 +1,69 @@
+import { DataSources } from "./data_sources.ts";
 import { RPC } from "./rpc.ts";
 import { RpcOptions } from "./rpc_options.ts";
 
-export enum CommunicationMethodType {
-  SIGNAL_CHANNEL,
-  INTERNAL_CHANNEL,
-  RPC_METHOD,
-}
-
-export type CommunicationMethodDef =
+export type CommunicationMethodDef<T extends DataSources> =
   & {
     name: string;
+    communicationMethod: T;
   }
   & ({
     communicationMethod:
-      | CommunicationMethodType.SIGNAL_CHANNEL
-      | CommunicationMethodType.INTERNAL_CHANNEL;
+      | DataSources.SIGNAL_CHANNEL
+      | DataSources.INTERNAL_CHANNEL;
+    isPrefix: boolean;
+    validator: <V>(v: unknown) => v is V;
   } | {
-    communicationMethod: CommunicationMethodType.RPC_METHOD;
+    communicationMethod: DataSources.RPC_METHOD;
     rpc: RPC;
     rpcOptions: RpcOptions;
   });
 
-export function newSignalChannel(name: string): CommunicationMethodDef {
+export function newSignalChannel(
+  name: string,
+  validator: <V>(v: unknown) => v is V,
+): CommunicationMethodDef<DataSources.SIGNAL_CHANNEL> {
   return {
     name,
-    communicationMethod: CommunicationMethodType.SIGNAL_CHANNEL,
+    communicationMethod: DataSources.SIGNAL_CHANNEL,
+    isPrefix: false,
+    validator,
   };
 }
 
-export function newInternalChannel(name: string): CommunicationMethodDef {
+export function newSignalChannelPrefix(
+  name: string,
+  validator: <V>(v: unknown) => v is V,
+): CommunicationMethodDef<DataSources.SIGNAL_CHANNEL> {
   return {
     name,
-    communicationMethod: CommunicationMethodType.INTERNAL_CHANNEL,
+    communicationMethod: DataSources.SIGNAL_CHANNEL,
+    isPrefix: true,
+    validator,
+  };
+}
+
+export function newInternalChannel(
+  name: string,
+  validator: <V>(v: unknown) => v is V,
+): CommunicationMethodDef<DataSources.INTERNAL_CHANNEL> {
+  return {
+    name,
+    communicationMethod: DataSources.INTERNAL_CHANNEL,
+    isPrefix: false,
+    validator,
+  };
+}
+
+export function newInternalChannelPrefix(
+  name: string,
+  validator: <V>(v: unknown) => v is V,
+): CommunicationMethodDef<DataSources.INTERNAL_CHANNEL> {
+  return {
+    name,
+    communicationMethod: DataSources.INTERNAL_CHANNEL,
+    isPrefix: true,
+    validator,
   };
 }
 
@@ -39,10 +71,10 @@ export function newRpcMethod(
   name: string,
   rpc: RPC,
   rpcOptions: RpcOptions,
-): CommunicationMethodDef {
+): CommunicationMethodDef<DataSources.RPC_METHOD> {
   return {
     name,
-    communicationMethod: CommunicationMethodType.RPC_METHOD,
+    communicationMethod: DataSources.RPC_METHOD,
     rpc,
     rpcOptions,
   };

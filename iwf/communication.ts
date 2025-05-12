@@ -1,16 +1,19 @@
 import { EncodedObject } from "iwfidl";
 import { IObjectEncoder } from "./object_encoder.ts";
 import { StateMovement } from "./state_movement.ts";
+import { TypeStore } from "./type_store.ts";
+import { DataSources } from "./data_sources.ts";
 
 export class Communication {
   encoder: IObjectEncoder;
-  internalChannelNames: Map<string, boolean>;
+  internalChannelNames: TypeStore<DataSources.INTERNAL_CHANNEL>;
   private _toPublishInternalChannel: Map<string, EncodedObject[]>;
   stateMovements: StateMovement[];
 
   constructor(
     encoder: IObjectEncoder,
-    internalChannelNames: Map<string, boolean> = new Map(),
+    internalChannelNames: TypeStore<DataSources.INTERNAL_CHANNEL> =
+      new TypeStore(DataSources.INTERNAL_CHANNEL),
   ) {
     this.encoder = encoder;
     this.internalChannelNames = internalChannelNames;
@@ -31,7 +34,7 @@ export class Communication {
   }
 
   publishToInternalChannel(channelName: string, value: unknown) {
-    if (!this.internalChannelNames.has(channelName)) {
+    if (!this.internalChannelNames.validateKey(channelName)) {
       throw new Error(`channel name ${channelName} is not registered`);
     }
 
