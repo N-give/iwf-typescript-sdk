@@ -12,7 +12,7 @@ export type CommunicationMethodDef<T extends DataSources> =
       | DataSources.SIGNAL_CHANNEL
       | DataSources.INTERNAL_CHANNEL;
     isPrefix: boolean;
-    validator: <V>(v: unknown) => v is V;
+    validator: <V>(v: unknown) => V;
   } | {
     communicationMethod: DataSources.RPC_METHOD;
     rpc: RPC;
@@ -21,7 +21,7 @@ export type CommunicationMethodDef<T extends DataSources> =
 
 export function newSignalChannel(
   name: string,
-  validator: <V>(v: unknown) => v is V,
+  validator: <V>(v: unknown) => V,
 ): CommunicationMethodDef<DataSources.SIGNAL_CHANNEL> {
   return {
     name,
@@ -33,7 +33,7 @@ export function newSignalChannel(
 
 export function newSignalChannelPrefix(
   name: string,
-  validator: <V>(v: unknown) => v is V,
+  validator: <V>(v: unknown) => V,
 ): CommunicationMethodDef<DataSources.SIGNAL_CHANNEL> {
   return {
     name,
@@ -45,7 +45,7 @@ export function newSignalChannelPrefix(
 
 export function newInternalChannel(
   name: string,
-  validator: <V>(v: unknown) => v is V,
+  validator: <V>(v: unknown) => V,
 ): CommunicationMethodDef<DataSources.INTERNAL_CHANNEL> {
   return {
     name,
@@ -57,7 +57,7 @@ export function newInternalChannel(
 
 export function newInternalChannelPrefix(
   name: string,
-  validator: <V>(v: unknown) => v is V,
+  validator: <V>(v: unknown) => V,
 ): CommunicationMethodDef<DataSources.INTERNAL_CHANNEL> {
   return {
     name,

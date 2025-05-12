@@ -197,7 +197,6 @@ export class WorkerService {
   handleWorkflowStateExecute(
     request: WorkflowStateExecuteRequest,
   ): WorkflowStateExecuteResponse {
-    console.log(request);
     const state = this.#registry.getWorkflowStateDef(
       request.workflowType,
       request.workflowStateId,

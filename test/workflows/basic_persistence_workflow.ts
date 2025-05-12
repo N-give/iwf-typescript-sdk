@@ -88,33 +88,15 @@ class BasicPersistenceWorkflow implements IWorkflow {
     return [
       dataAttributeDef(
         TEST_INIT_DATA_ATTRIBUTE_KEY,
-        <V>(v: unknown): v is V => {
-          const res = InitDASchema.safeParse(v);
-          if (!res.success) {
-            console.error(res.error);
-          }
-          return res.success;
-        },
+        <V>(v: unknown) => InitDASchema.parse(v) as V,
       ),
       dataAttributeDef(
         TEST_DATA_ATTRIBUTE_KEY,
-        <V>(v: unknown): v is V => {
-          const res = TestDAKey.safeParse(v);
-          if (!res.success) {
-            console.error(res.error);
-          }
-          return res.success;
-        },
+        <V>(v: unknown) => TestDAKey.parse(v) as V,
       ),
       dataAttributeDef(
         TEST_DATA_ATTRIBUTE_MODEL_1,
-        <V>(v: unknown): v is V => {
-          const res = Context.safeParse(v);
-          if (!res.success) {
-            console.error(res.error);
-          }
-          return res.success;
-        },
+        <V>(v: unknown) => Context.parse(v) as V,
       ),
       // dataAttributeDef(TEST_DATA_ATTRIBUTE_MODEL_2),
     ];

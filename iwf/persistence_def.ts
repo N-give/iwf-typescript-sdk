@@ -9,7 +9,7 @@ export type PersistenceFieldDef<T extends DataSources> =
   & ({
     fieldType: DataSources.DATA_ATTRIBUTE;
     isPrefix: boolean;
-    validator: <V>(v: unknown) => v is V;
+    validator: <V>(v: unknown) => V;
   } | {
     fieldType: DataSources.SEARCH_ATTRIBUTE;
     searchAttributType: SearchAttributeValueType;
@@ -17,7 +17,7 @@ export type PersistenceFieldDef<T extends DataSources> =
 
 export function dataAttributeDef(
   key: string,
-  validator: <V>(v: unknown) => v is V,
+  validator: <V>(v: unknown) => V,
 ): PersistenceFieldDef<DataSources.DATA_ATTRIBUTE> {
   return {
     key,
@@ -29,7 +29,7 @@ export function dataAttributeDef(
 
 export function dataAttributePrefix(
   key: string,
-  validator: <T>(v: unknown) => v is T,
+  validator: <V>(v: unknown) => V,
 ): PersistenceFieldDef<DataSources.DATA_ATTRIBUTE> {
   return {
     key,

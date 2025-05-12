@@ -52,7 +52,7 @@ export class TypeStore<T extends DataSources> {
 
   validateKeyAndData(
     key: string,
-  ): [true, (<V>(v: unknown) => v is V)] | [false, undefined] {
+  ): [true, (<V>(v: unknown) => V)] | [false, undefined] {
     if (this.#nameToType.has(key)) {
       const def = this.#nameToType.get(key);
       if (!def) {

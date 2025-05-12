@@ -74,7 +74,6 @@ export class Persistence {
       [SearchAttributeValueType.Datetime, new Map()],
     ]);
 
-    console.log(dataObjects);
     dataObjects.forEach((d) => {
       this.currentDataAttributes.set(d.key || `${d}`, d.value!);
     });
@@ -106,20 +105,8 @@ export class Persistence {
       throw new Error(`key ${key} does not contain any data`);
     }
     const decoded = this.encoder.decode(encoded);
-    if (!validateData(decoded)) {
-      console.log(
-        `invalid decoded value ${
-          JSON.stringify(decoded, null, 2)
-        } for data attribute ${key}`,
-      );
-      console.log(decoded);
-      throw new Error(
-        `registered type does not match value ${
-          JSON.stringify(decoded, null, 2)
-        } for data attribute ${key}`,
-      );
-    }
-    return decoded;
+    const validated = validateData(decoded);
+    return validated;
   }
 
   setDataAttribute(key: string, value: unknown) {
@@ -129,20 +116,8 @@ export class Persistence {
     if (!isValidKey) {
       throw new Error(`key ${key} is not regestered as a data object`);
     }
-    if (!validateData(value)) {
-      throw new Error(
-        `value ${
-          JSON.stringify(value, null, 2)
-        } does not match registered type for data attribute ${key}`,
-      );
-    }
-    console.log(
-      `setting value ${
-        JSON.stringify(value, null, 2)
-      } for data attribute ${key}`,
-    );
-    console.log(value);
-    const encoded = this.encoder.encode(value);
+    const validated = validateData(value);
+    const encoded = this.encoder.encode(validated);
     this.dataAttributesToReturn.set(key, encoded);
     this.currentDataAttributes.set(key, encoded);
   }
