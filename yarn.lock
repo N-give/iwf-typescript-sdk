@@ -2068,8 +2068,8 @@ __metadata:
 
 "iwfidl@file:gen/iwfidl::locator=iwf-typescript-sdk%40workspace%3A.":
   version: 1.0.0
-  resolution: "iwfidl@file:gen/iwfidl#gen/iwfidl::hash=49bffa&locator=iwf-typescript-sdk%40workspace%3A."
-  checksum: 10c0/0a49a13ff6de1adb80b4f9ddc6da41414b4f77669a52f9fb80f25fa635543a5b5d846b4cc899cbdf095623d9f232e452af46ee08d0a5cf8ae8c2d7421352f0da
+  resolution: "iwfidl@file:gen/iwfidl#gen/iwfidl::hash=696606&locator=iwf-typescript-sdk%40workspace%3A."
+  checksum: 10c0/958d8e8a281d718645f9de694ea91f33cd8014bfb99cbd8180789f037bd5da4374dc5973e75621e10a7afabe6f4aa8e2bc483ed200ae3ab66c03f22e66ede89a
   languageName: node
   linkType: hard
 
