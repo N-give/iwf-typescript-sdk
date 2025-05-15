@@ -10,7 +10,7 @@
     "test": "node --test",
     "retest": "yarn build && yarn test",
     "gen": "openapi-generator-cli generate && yarn typed-openapi iwf-idl/iwf-sdk.yaml -o gen/api-schema.ts --runtime zod",
-    "unnecessary": "openapi-typescript iwf-idl/iwf-sdk.yaml -o iwf-sdk.ts ",
+    "unnecessary": "openapi-typescript iwf-idl/iwf-sdk.yaml -o gen/iwf-sdk.ts ",
     "clean": "rm -rf ./gen && rm -rf ./dist"
   },
   "keywords": [],
