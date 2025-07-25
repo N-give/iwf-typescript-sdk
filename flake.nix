@@ -13,16 +13,37 @@
           inherit system;
         };
       in {
+        packages = {
+          default = pkgs.buildNpmPackage {
+            name = "iwf-typescript-sdk";
+            buildInputs = with pkgs; [
+              nodejs_latest
+              openapi-generator-cli
+              typescript
+            ];
+            src = self;
+            npmDeps = pkgs.importNpmLock {
+              npmRoot = ./.;
+            };
+            buildPhase = ''
+              npm run build:all
+            '';
+            installPhase = ''
+              mkdir $out
+              cp -r node_modules $out/node_modules
+              cp package.json $out/package.json
+              cp -r dist $out/dist
+            '';
+          };
+        };
+
         devShell = pkgs.mkShell {
           buildInputs = with pkgs; [
             deno
-            jdk
             nodejs
-            nodePackages.npm
             openapi-generator-cli
             typescript
             typescript-language-server
-            yarn-berry
           ];
         };
       }

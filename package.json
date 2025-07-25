@@ -5,11 +5,12 @@
   "module": "main.js",
   "types": "dist/index.ts",
   "scripts": {
+    "setup": "npm run gen && npm install ./gen/iwfidl/ --install-links",
     "build:all": "npm run gen && npm run build",
     "build": "tsc",
     "test": "node --test",
-    "retest": "yarn build && yarn test",
-    "gen": "openapi-generator-cli generate && yarn typed-openapi iwf-idl/iwf-sdk.yaml -o gen/api-schema.ts --runtime zod",
+    "retest": "npm build && npm test",
+    "gen": "openapi-generator-cli generate && npm typed-openapi iwf-idl/iwf-sdk.yaml -o gen/api-schema.ts --runtime zod",
     "unnecessary": "openapi-typescript iwf-idl/iwf-sdk.yaml -o gen/iwf-sdk.ts ",
     "clean": "rm -rf ./gen && rm -rf ./dist"
   },
@@ -32,5 +33,5 @@
     "@types/node": "^22.13.4",
     "typescript": "^5.8.2"
   },
-  "packageManager": "yarn@4.9.1"
+  "packageManager": "npm"
 }

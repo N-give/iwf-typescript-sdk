@@ -82,6 +82,11 @@ export class Client {
     const startStartId = getFinalWorkflowStateId(startingState);
     const saTypes = this.#registry.getSearchAttributeTypeStore(wfType) ||
       new Map();
+    this.#checkInitialDataAttributes(
+      this.#registry.getWorkflowDataAttributesKeyStore(wfType) ||
+      new TypeStore<DataSources.DATA_ATTRIBUTE>(DataSources.DATA_ATTRIBUTE),
+      options.initialDataAttributes,
+    );
     const unregisteredOptions: UnregisteredWorkflowOptions = {
       workflowIdReusePolicy: options.workflowIdReusePolicy,
       workflowCronSchedule: options.workflowCronSchedule,
@@ -91,15 +96,13 @@ export class Client {
         shouldSkipWaitUntilApi(startingState),
         startingState.getStateOptions(),
       ),
-      initialSearchAttributes: this.convertToSearchAttributeList(
+      initialSearchAttributes: this.#convertToSearchAttributeList(
         saTypes,
         options.initialSearchAttributes,
       ),
-      initialDataAttributes: this.#checkInitialDataAttributes(
-        this.#registry.getWorkflowDataAttributesKeyStore(wfType) ||
-          new TypeStore<DataSources.DATA_ATTRIBUTE>(DataSources.DATA_ATTRIBUTE),
-        options.initialDataAttributes,
-      ),
+      initialDataAttributes: options.initialDataAttributes,
+      waitForCompletionStateExecutionIds: [],
+      waitForCompletionStateIds: [],
     };
 
     return this.#unregisteredClient.startWorkflow(
@@ -116,7 +119,10 @@ export class Client {
   #checkInitialDataAttributes(
     daTypeStore: TypeStore<DataSources.DATA_ATTRIBUTE>,
     initialDataAttributes: Map<string, unknown>,
-  ): KeyValue[] {
+  ) {
+    if (initialDataAttributes.size === 0) {
+      return;
+    }
     const das: KeyValue[] = [];
     initialDataAttributes.entries().forEach(([key, value]) => {
       const [isValidKey, validateData] = daTypeStore.validateKeyAndData(key);
@@ -290,6 +296,10 @@ export class Client {
     );
   }
 
+  waitForWorkflowCompletion(workflowId: string) {
+    return this.#unregisteredClient.waitForWorkflowCompletion(workflowId);
+  }
+
   // InvokeRPC invokes an RPC
   // workflowId is required, workflowRunId is optional and default to current runId of the workflowId
   // rpc is required
@@ -322,7 +332,7 @@ export class Client {
     _workflowId: string,
     _workflowRunId: string,
     _config: WorkflowConfig,
-  ) {}
+  ) { }
 
   // GetSimpleWorkflowResult returns the result of a workflow execution, for simple case that only one WorkflowState completes with result
   // If there are more than one WorkflowStates complete with result, GetComplexWorkflowResults must be used instead
@@ -331,7 +341,7 @@ export class Client {
   getSimpleWorkflowResult(
     _ctx: Context,
     _workflowId: string,
-    _workflowRunId: string,
+    _workflowRunId?: string,
   ): unknown {
     return {};
   }
@@ -342,7 +352,7 @@ export class Client {
   getComplexWorkflowResults(
     _ctx: Context,
     _workflowId: string,
-    _workflowRunId: string,
+    _workflowRunId?: string,
   ): StateCompletionOutput[] {
     return [];
   }
@@ -393,7 +403,7 @@ export class Client {
     return new Map();
   }
 
-  convertToSearchAttributeList(
+  #convertToSearchAttributeList(
     types: Map<string, SearchAttributeValueType>,
     attributes: Map<string, unknown>,
   ): SearchAttribute[] {
