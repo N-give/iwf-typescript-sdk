@@ -331,7 +331,7 @@ export class Client {
   getSimpleWorkflowResult(
     _ctx: Context,
     _workflowId: string,
-    _workflowRunId: string,
+    _workflowRunId?: string,
   ): unknown {
     return {};
   }
@@ -342,7 +342,7 @@ export class Client {
   getComplexWorkflowResults(
     _ctx: Context,
     _workflowId: string,
-    _workflowRunId: string,
+    _workflowRunId?: string,
   ): StateCompletionOutput[] {
     return [];
   }
