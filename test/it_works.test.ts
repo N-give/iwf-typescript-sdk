@@ -54,6 +54,8 @@ describe("Basic workflow tests", () => {
         workflowRetryPolicy: {},
         initialSearchAttributes: new Map(),
         initialDataAttributes: new Map(),
+        waitForCompletionStateExecutionIds: [],
+        waitForCompletionStateIds: [],
       },
     );
 
@@ -86,8 +88,9 @@ describe("Basic persistence workflow tests", () => {
 
   it("starts basic persistence test workflow", async () => {
     console.log("starting test...");
+    const workflowId = `basic-persistence-workflow-${new Date().getTime()}`;
     const ctx: Context = {
-      workflowId: `basic-persistence-workflow-${new Date().getTime()}`,
+      workflowId,
       workflowRunId: "run1",
       workflowStartedTimestamp: 0,
     };
@@ -106,10 +109,13 @@ describe("Basic persistence workflow tests", () => {
         initialDataAttributes: new Map([
           [TEST_INIT_DATA_ATTRIBUTE_KEY, "init-test-value"],
         ]),
+        waitForCompletionStateExecutionIds: [],
+        waitForCompletionStateIds: [],
       },
     );
 
     assert.ok(wfRunId, "Workflow Run Id should not be null");
-    await (new Promise((resolve) => setTimeout(resolve, 5000)));
+    await client.waitForWorkflowCompletion(workflowId);
+    // await (new Promise((resolve) => setTimeout(resolve, 5000)));
   });
 });
