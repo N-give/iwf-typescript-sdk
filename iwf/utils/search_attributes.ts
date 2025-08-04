@@ -14,17 +14,14 @@ export interface SearchAtributeTypeMapper {
   [SearchAttributeValueType.Double]: number;
   [SearchAttributeValueType.Int]: number;
   [SearchAttributeValueType.Bool]: boolean;
-  [SearchAttributeValueType.Datetime]: Date;
+  [SearchAttributeValueType.Datetime]: string;
 }
 
 export function getSearchAttributeValue<T extends SearchAttributeValueType>(
   sa: SearchAttribute,
 ): SearchAtributeTypeMapper[T] {
   switch (sa.valueType) {
-    case SearchAttributeValueType.Text: {
-      // passthrough to keyword because they should be handled the same way
-    }
-    case SearchAttributeValueType.Keyword: {
+    case SearchAttributeValueType.Text, SearchAttributeValueType.Keyword: {
       const v: unknown = sa.stringValue;
       if (!matchesSearchAttributeType(sa.valueType, v)) {
         throw new Error(
@@ -118,7 +115,7 @@ export function matchesSearchAttributeType<T extends SearchAttributeValueType>(
     }
 
     case SearchAttributeValueType.Datetime: {
-      return v === "string";
+      return typeof v === "string";
     }
 
     default:
@@ -153,7 +150,7 @@ export function createSearchAttribute<T extends SearchAttributeValueType>(
     }
 
     case SearchAttributeValueType.Int: {
-      ret.doubleValue = value as number;
+      ret.integerValue = value as number;
       break;
     }
 

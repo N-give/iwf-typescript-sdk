@@ -138,7 +138,7 @@ export class Registry {
           break;
 
         case DataSources.SEARCH_ATTRIBUTE:
-          searchAttributes.set(key, DataSources.SEARCH_ATTRIBUTE);
+          searchAttributes.set(key, p.searchAttributeType);
           break;
 
         default:
@@ -152,7 +152,7 @@ export class Registry {
   }
 
   getAllRegisteredWorkflowTypes(): string[] {
-    return Array.from(this._workflows.keys());
+    return this._workflows.keys().toArray();
   }
 
   getWorkflowStartingState(wfType: string): IWorkflowState | undefined {

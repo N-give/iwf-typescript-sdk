@@ -12,7 +12,7 @@ export type PersistenceFieldDef<T extends DataSources> =
     validator: <V>(v: unknown) => V;
   } | {
     fieldType: DataSources.SEARCH_ATTRIBUTE;
-    searchAttributType: SearchAttributeValueType;
+    searchAttributeType: SearchAttributeValueType;
   });
 
 export function dataAttributeDef(
@@ -46,6 +46,6 @@ export function searchAttributeDef(
   return {
     key,
     fieldType: DataSources.SEARCH_ATTRIBUTE,
-    searchAttributType: saType,
+    searchAttributeType: saType,
   };
 }

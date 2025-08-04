@@ -2,13 +2,13 @@ import {
   Configuration,
   Context,
   DefaultApi,
-  KeyValue,
   SearchAttribute,
   SearchAttributeValueType,
   StateCompletionOutput,
   WorkflowConfig,
   WorkflowSearchRequest,
   WorkflowSearchResponse,
+  WorkflowWaitForStateCompletionResponse,
 } from "iwfidl";
 import { ResetWorkflowOptions } from "./reset_workflow_options.ts";
 import { WorkflowStopOptions } from "./workflow_stop_options.ts";
@@ -100,7 +100,11 @@ export class Client {
         saTypes,
         options.initialSearchAttributes,
       ),
-      initialDataAttributes: options.initialDataAttributes,
+      initialDataAttributes: this.#checkInitialDataAttributes(
+        this.#registry.getWorkflowDataAttributesKeyStore(wfType) ||
+        new TypeStore<DataSources.DATA_ATTRIBUTE>(DataSources.DATA_ATTRIBUTE),
+        options.initialDataAttributes,
+      ),
       waitForCompletionStateExecutionIds: [],
       waitForCompletionStateIds: [],
     };
@@ -119,11 +123,10 @@ export class Client {
   #checkInitialDataAttributes(
     daTypeStore: TypeStore<DataSources.DATA_ATTRIBUTE>,
     initialDataAttributes: Map<string, unknown>,
-  ) {
+  ): Map<string, unknown> {
     if (initialDataAttributes.size === 0) {
-      return;
+      return initialDataAttributes;
     }
-    const das: KeyValue[] = [];
     initialDataAttributes.entries().forEach(([key, value]) => {
       const [isValidKey, validateData] = daTypeStore.validateKeyAndData(key);
       if (!isValidKey) {
@@ -134,12 +137,8 @@ export class Client {
           `value ${value} does not match type registered for data attribute ${key} `,
         );
       }
-      das.push({
-        key,
-        value: this.#options.objectEncoder.encode(value),
-      });
     });
-    return das;
+    return initialDataAttributes;
   }
 
   // SignalWorkflow signals a workflow execution
@@ -173,12 +172,12 @@ export class Client {
   // workflowId is required, workflowRunId is optional and default to current runId of the workflowId
   // keys is required to be non-empty. If you intend to return all data objects, use GetAllWorkflowDataAttributes API instead
   getWorkflowDataAttributes(
-    ctx: Context,
     workflow: IWorkflow,
     workflowId: string,
     workflowRunId: string,
     keys: string[],
-  ): Map<string, unknown> {
+    useMemoForDataAttributes: boolean,
+  ): Promise<Map<string, unknown>> {
     const wfType = getFinalWorkflowType(workflow);
     const typeMap = this.#registry.getWorkflowDataAttributesKeyStore(wfType);
     keys.forEach((key) => {
@@ -187,72 +186,65 @@ export class Client {
       }
     });
     return this.#unregisteredClient.getWorkflowDataAttributes(
-      ctx,
       workflowId,
       workflowRunId,
       keys,
+      useMemoForDataAttributes,
     );
   }
 
   // GetWorkflowSearchAttributes returns search attributes of a workflow execution
   // workflowId is required, workflowRunId is optional and default to current runId of the workflowId
   // keys is required to be non-empty. If you intend to return all data objects, use GetAllWorkflowSearchAttributes API instead
-  getWorkflowSearchAttributes(
-    ctx: Context,
+  async getWorkflowSearchAttributes(
     workflow: IWorkflow,
     workflowId: string,
     workflowRunId: string,
     keys: string[],
-  ): Map<string, unknown> {
+  ): Promise<Map<string, unknown>> {
     const wfType = getFinalWorkflowType(workflow);
     const typeMap = this.#registry.getSearchAttributeTypeStore(wfType);
     if (!typeMap) {
       throw new Error(`workflow type ${wfType} is not regestered`);
     }
-    const keyAndTypes = Array.from(
-      keys
-        .filter((key) => typeMap.get(key))
-        .map((key) => {
-          return {
-            key,
-            valueType: typeMap.get(key),
-          };
-        }),
-    );
-    const vals = this.#unregisteredClient.getWorkflowSearchAttributes(
-      ctx,
-      workflowId,
-      workflowRunId,
-      keyAndTypes,
-    );
-    return new Map(
-      vals.entries().map(([k, v]) => [
-        k,
-        getSearchAttributeValue(v),
-      ]),
-    );
+    const keyAndTypes = keys
+      .filter((key) => typeMap.get(key))
+      .map((key) => {
+        return {
+          key,
+          valueType: typeMap.get(key),
+        };
+      });
+    const result = new Map();
+    const vals: SearchAttribute[] =
+      (await this.#unregisteredClient.getWorkflowSearchAttributes(
+        workflowId,
+        workflowRunId,
+        keyAndTypes,
+      )).searchAttributes || [];
+    vals.forEach((sa) => {
+      result.set(sa.key || "", getSearchAttributeValue(sa));
+    });
+    return result;
   }
 
   // GetAllWorkflowSearchAttributes returns all search attributes of a workflow execution
   // workflowId is required, workflowRunId is optional and default to current runId of the workflowId
   getAllWorkflowSearchAttributes(
-    ctx: Context,
     workflow: IWorkflow,
     workflowId: string,
     workflowRunId: string,
-  ): Map<string, unknown> {
+  ): Promise<Map<string, unknown>> {
     const wfType = getFinalWorkflowType(workflow);
     const typeMap = this.#registry.getSearchAttributeTypeStore(wfType);
     if (!typeMap) {
       throw new Error(`workflow type ${wfType} is not regestered`);
     }
-    const keys = Array.from(typeMap.keys());
     return this.getWorkflowSearchAttributes(
-      ctx,
       workflow,
       workflowId,
       workflowRunId,
-      keys,
+      typeMap.keys().toArray(),
     );
   }
 
@@ -296,8 +288,17 @@ export class Client {
     );
   }
 
-  waitForWorkflowCompletion(workflowId: string) {
-    return this.#unregisteredClient.waitForWorkflowCompletion(workflowId);
+  waitForWorkflowCompletion<T>(
+    validator: <T>(v: unknown) => T,
+    workflowId: string,
+    workflowRunId?: string,
+  ): Promise<T> {
+    return this.#unregisteredClient.getWorkflowResultsAndDecode(
+      workflowId,
+      workflowRunId || "",
+      true,
+      validator,
+    );
   }
 
   // InvokeRPC invokes an RPC
@@ -357,6 +358,18 @@ export class Client {
     return [];
   }
 
+  waitForStateExecutionCompletion(
+    workflowId: string,
+    state: IWorkflowState,
+    stateExecutionNumber: number = 1,
+  ): Promise<WorkflowWaitForStateCompletionResponse> {
+    const stateId: string = getFinalWorkflowStateId(state);
+    return this.#unregisteredClient.waitForStateExecutionCompletion(
+      workflowId,
+      `${stateId}-${stateExecutionNumber}`,
+    );
+  }
+
   // ResetWorkflow resets a workflow execution
   // workflowId is required, workflowRunId is optional and default to current runId of the workflowId
   // resetWorkflowTypeAndOptions is optional, it provides combination parameter for reset. Default (when nil) will reset to iwfidl.BEGINNING resetType
@@ -407,72 +420,70 @@ export class Client {
     types: Map<string, SearchAttributeValueType>,
     attributes: Map<string, unknown>,
   ): SearchAttribute[] {
-    return Array.from(
-      attributes.entries().map(([key, value]) => {
-        const t = types.get(key);
-        if (!t) {
-          throw new Error(`key ${key} is not defined as search attribute`);
-        }
-        switch (t) {
-          case SearchAttributeValueType.Int:
-            if (typeof value !== "number" || !Number.isInteger(value)) {
-              throw new Error(
-                `Attribute, ${key}, value, ${value} does not match registered of ${t}`,
-              );
-            }
-            return {
-              key,
-              integerValue: value,
-            };
+    return attributes.entries().map(([key, value]) => {
+      const t = types.get(key);
+      if (!t) {
+        throw new Error(`key ${key} is not defined as search attribute`);
+      }
+      switch (t) {
+        case SearchAttributeValueType.Int:
+          if (typeof value !== "number" || !Number.isInteger(value)) {
+            throw new Error(
+              `Attribute, ${key}, value, ${value} does not match registered of ${t}`,
+            );
+          }
+          return {
+            key,
+            integerValue: value,
+          };
 
-          case SearchAttributeValueType.Double:
-            if (typeof value !== "number") {
-              throw new Error(
-                `Attribute, ${key}, value, ${value} does not match registered of ${t}`,
-              );
-            }
-            return {
-              key,
-              doubleValue: value,
-            };
+        case SearchAttributeValueType.Double:
+          if (typeof value !== "number") {
+            throw new Error(
+              `Attribute, ${key}, value, ${value} does not match registered of ${t}`,
+            );
+          }
+          return {
+            key,
+            doubleValue: value,
+          };
 
-          case SearchAttributeValueType.Bool:
-            if (typeof value !== "boolean") {
-              throw new Error(
-                `Attribute, ${key}, value, ${value} does not match registered of ${t}`,
-              );
-            }
-            return {
-              key,
-              boolValue: value,
-            };
+        case SearchAttributeValueType.Bool:
+          if (typeof value !== "boolean") {
+            throw new Error(
+              `Attribute, ${key}, value, ${value} does not match registered of ${t}`,
+            );
+          }
+          return {
+            key,
+            boolValue: value,
+          };
 
-          case SearchAttributeValueType.Keyword, SearchAttributeValueType.Text:
-            if (typeof value !== "string") {
-              throw new Error(
-                `Attribute, ${key}, value, ${value} does not match registered type ${t}`,
-              );
-            }
-            return {
-              key,
-              stringValue: value,
-            };
+        case SearchAttributeValueType.Keyword, SearchAttributeValueType.Text:
+          if (typeof value !== "string") {
+            throw new Error(
+              `Attribute, ${key}, value, ${value} does not match registered type ${t}`,
+            );
+          }
+          return {
+            key,
+            stringValue: value,
+          };
 
-          case SearchAttributeValueType.Datetime:
-            if (typeof value !== "object" || !(value instanceof Date)) {
-              throw new Error(
-                `Attribute, ${key}, value, ${value} does not match registered type ${t}`,
-              );
-            }
-            return {
-              key,
-              stringValue: value.toLocaleString(),
-            };
+        case SearchAttributeValueType.Datetime:
+          if (typeof value !== "object" || !(value instanceof Date)) {
+            throw new Error(
+              `Attribute, ${key}, value, ${value} does not match registered type ${t}`,
+            );
+          }
+          return {
+            key,
+            stringValue: value.toLocaleString(),
+          };
 
-          default:
-            throw new Error(`unsupported search attribute type ${t}`);
-        }
-      }),
-    );
+        default:
+          throw new Error(`unsupported search attribute type ${t}`);
+      }
+    }).toArray();
   }
 }

@@ -61,13 +61,13 @@ export function anyCommandCombinationCompletedRequest(
   return {
     commands,
     commandWaitingType: "ANY_COMBINATION_COMPLETED",
-    commandCombinations: Array.from(listOfCommandIds.map(
+    commandCombinations: listOfCommandIds.map(
       (commandIds) => {
         return {
           commandIds,
         };
       },
-    )),
+    ),
   };
 }
 
@@ -131,5 +131,5 @@ export function toIdlCommandRequest(
   if (interStateCmds.length > 0) {
     idlCmdReq.interStateChannelCommands = interStateCmds;
   }
-  return commandRequest;
+  return idlCmdReq;
 }

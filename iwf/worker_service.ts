@@ -281,13 +281,11 @@ export class WorkerService {
 function getToPublish(
   channels: Map<string, EncodedObject[]>,
 ): InterStateChannelPublishing[] {
-  return Array.from(
-    channels.entries().flatMap(([name, l]) => {
-      return l.map((value) => {
-        return { channelName: name, value };
-      });
-    }),
-  );
+  return channels.entries().flatMap(([name, l]) => {
+    return l.map((value) => {
+      return { channelName: name, value };
+    });
+  }).toArray();
 }
 
 function fromIdlContext(ctx: Context, wfType: string): WorkflowContext {

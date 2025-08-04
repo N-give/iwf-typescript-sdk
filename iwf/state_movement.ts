@@ -29,7 +29,7 @@ export function toIdlDecision(
   encoder: IObjectEncoder,
 ): IdlStateDecision {
   return {
-    nextStates: Array.from(from.nextStates.map((m) => {
+    nextStates: from.nextStates.map((m) => {
       const input = encoder.encode(m.nextStateInput);
       if (m.nextStateId.startsWith(RESERVED_STATE_ID_PREFIX)) {
         return {
@@ -50,6 +50,6 @@ export function toIdlDecision(
         stateInput: input,
         stateOptions: options,
       };
-    })),
+    }),
   };
 }

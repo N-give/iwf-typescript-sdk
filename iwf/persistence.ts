@@ -127,14 +127,17 @@ export class Persistence {
   ): SearchAtributeTypeMapper[T] | undefined {
     const saType = this.saKeyToType.get(key);
     if (saType === null || saType === undefined) {
-      throw new Error(`key ${key} has not been registered`);
+      const err = `key ${key} has not been registered`;
+      console.error(err);
+      throw new Error(err);
     }
 
     const value = this.saCurrent.get(saType)?.get(key);
     if (value === null || value === undefined) {
-      throw new Error(
-        `key ${key} has not been registered as ${saType} search attribute`,
-      );
+      const err =
+        `key ${key} has not been registered as ${saType} search attribute`;
+      console.error(err);
+      throw new Error(err);
     }
 
     return value as SearchAtributeTypeMapper[T];
@@ -146,20 +149,27 @@ export class Persistence {
   ) {
     const saType = this.saKeyToType.get(key);
     if (saType === null || saType === undefined) {
-      throw new Error(`key ${key} has not been registered`);
+      const err = `key ${key} has not been registered`;
+      console.error(err);
+      throw new Error(err);
     }
     if (!matchesSearchAttributeType(saType, value)) {
-      throw new Error(`value is not of type ${saType}`);
+      const err = `value is not of type ${saType}`;
+      console.error(err);
+      throw new Error(err);
     }
     this.saCurrent.get(saType)?.set(key, value);
+    this.saToReturn.get(saType)?.set(key, value);
   }
 
   getStateExecutionLocal(key: string): unknown {
-    const state = this.currentStateExeLocal.get(key);
-    if (state === null || state === undefined) {
-      throw new Error(`state execution local ${key} is not registered`);
+    const stateLocal = this.currentStateExeLocal.get(key);
+    if (stateLocal === null || stateLocal === undefined) {
+      const err = `state execution local ${key} is not registered`;
+      console.error(err);
+      throw new Error(err);
     }
-    return this.encoder.decode(state);
+    return this.encoder.decode(stateLocal);
   }
 
   setStateExecutionLocal(key: string, value: unknown) {
@@ -180,37 +190,29 @@ export class Persistence {
     upsertSearchAttributes: SearchAttribute[];
   } {
     return {
-      dataObjectsToReturn: Array.from(
-        this.dataAttributesToReturn
-          .entries().map(([key, value]) => {
-            return { key, value };
-          }),
-      ),
+      dataObjectsToReturn: this.dataAttributesToReturn
+        .entries().map(([key, value]) => {
+          return { key, value };
+        }).toArray(),
 
-      stateLocalToReturn: Array.from(
-        this.stateExeLocalToReturn
-          .entries().map(([key, value]) => {
-            return { key, value };
-          }),
-      ),
+      stateLocalToReturn: this.stateExeLocalToReturn
+        .entries().map(([key, value]) => {
+          return { key, value };
+        }).toArray(),
 
-      recordEvents: Array.from(
-        this.recordedEvents
-          .entries().map(([key, value]) => {
-            return { key, value };
-          }),
-      ),
+      recordEvents: this.recordedEvents
+        .entries().map(([key, value]) => {
+          return { key, value };
+        }).toArray(),
 
-      upsertSearchAttributes: Array.from(
-        this.saToReturn
-          .entries().flatMap(([saType, sas]) => {
-            return sas.entries().map(
-              ([key, sa]) => {
-                return createSearchAttribute(key, saType, sa);
-              },
-            );
-          }),
-      ),
+      upsertSearchAttributes: this.saToReturn
+        .entries().flatMap(([saType, sas]) => {
+          return sas.entries().map(
+            ([key, sa]) => {
+              return createSearchAttribute(key, saType, sa);
+            },
+          );
+        }).toArray(),
     };
   }
 }

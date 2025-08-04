@@ -26,11 +26,11 @@ export function multiNextStates(
   ...states: IWorkflowState[]
 ): StateDecision {
   return {
-    nextStates: Array.from(states.map((state) => {
+    nextStates: states.map((state) => {
       return {
         nextStateId: getFinalWorkflowStateId(state),
       };
-    })),
+    }),
   };
 }
 
@@ -46,11 +46,11 @@ export function multiNextStatesByStateIds(
   ...ids: string[]
 ): StateDecision {
   return {
-    nextStates: Array.from(ids.map((id) => {
+    nextStates: ids.map((id) => {
       return {
         nextStateId: id,
       };
-    })),
+    }),
   };
 }
 

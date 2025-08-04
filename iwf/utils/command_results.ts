@@ -21,25 +21,24 @@ export function fromIdlCommandResults(
   },
   encoder: IObjectEncoder,
 ): CommandResults {
-  const timers: TimerCommandResult[] = Array.from(
-    (commandResults.timerResults || []).map((r: TimerResult) => {
+  const timers: TimerCommandResult[] = (commandResults.timerResults || []).map(
+    (r: TimerResult) => {
       return {
         commandId: r.commandId,
         status: r.timerStatus,
       };
-    }),
+    },
   );
-  const signals: SignalCommandResult[] = Array.from(
-    (commandResults.signalResults || []).map((r: SignalResult) => {
+  const signals: SignalCommandResult[] = (commandResults.signalResults || [])
+    .map((r: SignalResult) => {
       return {
         commandId: r.commandId,
         channelName: r.signalChannelName,
         status: r.signalRequestStatus,
         signalValue: r.signalValue,
       };
-    }),
-  );
-  const internalChannels: InternalChannelCommandResult[] = Array.from(
+    });
+  const internalChannels: InternalChannelCommandResult[] =
     (commandResults.interStateChannelResults || []).map(
       (r: InterStateChannelResult) => {
         return {
@@ -49,8 +48,7 @@ export function fromIdlCommandResults(
           signalValue: r.value,
         };
       },
-    ),
-  );
+    );
   return new CommandResults(
     timers,
     signals,

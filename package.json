@@ -9,8 +9,8 @@
     "build:all": "npm run gen && npm run build",
     "build": "tsc",
     "test": "node --test",
-    "retest": "npm build && npm test",
-    "gen": "openapi-generator-cli generate && npm typed-openapi iwf-idl/iwf-sdk.yaml -o gen/api-schema.ts --runtime zod",
+    "retest": "npm run build && npm run test",
+    "gen": "openapi-generator-cli generate && npm run typed-openapi iwf-idl/iwf-sdk.yaml -o gen/api-schema.ts --runtime zod",
     "unnecessary": "openapi-typescript iwf-idl/iwf-sdk.yaml -o gen/iwf-sdk.ts ",
     "clean": "rm -rf ./gen && rm -rf ./dist"
   },
@@ -19,18 +19,18 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@openapitools/openapi-generator-cli": "^2.16.3",
     "esm": "^3.2.25",
     "fastify": "^5.2.2",
     "fastify-type-provider-zod": "^4.0.2",
     "iwfidl": "file:gen/iwfidl",
-    "openapi-typescript": "^7.6.1",
     "tsx": "^4.19.3",
-    "typed-openapi": "^0.10.1",
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@openapitools/openapi-generator-cli": "^2.16.3",
     "@types/node": "^22.13.4",
+    "openapi-typescript": "^7.6.1",
+    "typed-openapi": "^0.10.1",
     "typescript": "^5.8.2"
   },
   "packageManager": "npm"
