@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
-import { /*  after ,*/ before, describe, it } from "node:test";
+import { after, before, describe, it } from "node:test";
 import { Client } from "../iwf/client.ts";
-// import Fastify, { FastifyInstance } from "fastify";
+import Fastify, { FastifyInstance } from "fastify";
 import { LOCAL_DEFAULT_CLIENT_OPTIONS } from "../iwf/client_options.ts";
 import { Context } from "iwfidl";
 import {
@@ -9,17 +9,31 @@ import {
   BASIC_STATE_2,
   BASIC_WORKFLOW,
 } from "./workflows/basic_workflow.ts";
-// import routes from "./routes.ts";
+import routes from "./routes.ts";
 import { REGISTRY } from "./registry.ts";
 
 describe("Basic Workflow", () => {
   let client: Client;
+  let fastify: FastifyInstance;
+  let workerUrl: string;
 
   before(async () => {
+    fastify = Fastify({
+      // logger: true,
+    });
+    fastify.register(routes);
+    await fastify.listen({
+      port: 0,
+      listenTextResolver: (adr) => workerUrl = adr,
+    });
     client = new Client(
       REGISTRY,
-      LOCAL_DEFAULT_CLIENT_OPTIONS,
+      { ...LOCAL_DEFAULT_CLIENT_OPTIONS, workerUrl },
     );
+  });
+
+  after(async () => {
+    await fastify.close();
   });
 
   it("start_basic_workflow", async () => {

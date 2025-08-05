@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
-import { before, describe, it } from "node:test";
+import { after, before, describe, it } from "node:test";
 import { Client } from "../iwf/client.ts";
-// import Fastify, { FastifyInstance } from "fastify";
+import Fastify, { FastifyInstance } from "fastify";
 import { LOCAL_DEFAULT_CLIENT_OPTIONS } from "../iwf/client_options.ts";
 import { Context, EncodedObject } from "iwfidl";
 import { REGISTRY } from "./registry.ts";
@@ -12,15 +12,30 @@ import {
   TEST_INIT_DATA_ATTRIBUTE_KEY,
 } from "./workflows/basic_persistence_workflow.ts";
 import { Context as ZodContext } from "../gen/api-schema.ts";
+import routes from "./routes.ts";
 
 describe("Basic persistence workflow tests", () => {
   let client: Client;
+  let fastify: FastifyInstance;
+  let workerUrl: string;
 
-  before(() => {
+  before(async () => {
+    fastify = Fastify({
+      // logger: true,
+    });
+    fastify.register(routes);
+    await fastify.listen({
+      port: 0,
+      listenTextResolver: (adr) => workerUrl = adr,
+    });
     client = new Client(
       REGISTRY,
-      LOCAL_DEFAULT_CLIENT_OPTIONS,
+      { ...LOCAL_DEFAULT_CLIENT_OPTIONS, workerUrl },
     );
+  });
+
+  after(async () => {
+    await fastify.close();
   });
 
   it("start_basic_persistence_workflow", async () => {
