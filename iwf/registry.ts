@@ -163,13 +163,13 @@ export class Registry {
     return this._states.get(wfType)?.get(id);
   }
 
-  getSignalNameStore(
+  getSignalChannelNameStore(
     wfType: string,
   ): TypeStore<DataSources.SIGNAL_CHANNEL> | undefined {
     return this._signalNameStore.get(wfType);
   }
 
-  getWorkflowInternalChannelNameStore(
+  getInternalChannelNameStore(
     wfType: string,
   ): TypeStore<DataSources.INTERNAL_CHANNEL> | undefined {
     return this._internalChannels.get(wfType);

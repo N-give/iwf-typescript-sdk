@@ -153,7 +153,7 @@ export class Client {
     signalValue: unknown,
   ) {
     const wfType = getFinalWorkflowType(workflow);
-    const signalNameStore = this.#registry.getSignalNameStore(wfType);
+    const signalNameStore = this.#registry.getSignalChannelNameStore(wfType);
     if (!signalNameStore?.validateKey(signalChannelName)) {
       throw new Error(
         `signal channel ${signalChannelName} is not defined in workflow type ${wfType}`,
@@ -385,14 +385,18 @@ export class Client {
 
   // DescribeWorkflow describes the basic info of a workflow execution
   // workflowId is required, workflowRunId is optional and default to current runId of the workflowId
-  describeWorkflow(
-    _ctx: Context,
-    _workflowId: string,
-    _workflowRunId: string,
-  ): WorkflowInfo {
+  async describeWorkflow(
+    workflowId: string,
+    workflowRunId: string = "",
+  ): Promise<WorkflowInfo> {
+    const response = await this.#unregisteredClient.getWorkflow(
+      workflowId,
+      workflowRunId,
+      false,
+    );
     return {
-      status: "RUNNING",
-      currentRunId: "",
+      status: response.workflowStatus,
+      currentRunId: response.workflowRunId,
     };
   }
 

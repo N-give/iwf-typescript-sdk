@@ -18,6 +18,8 @@ import { Communication } from "./communication.ts";
 import { toIdlCommandRequest } from "./command_request.ts";
 import { toIdlDecision } from "./state_movement.ts";
 import { fromIdlCommandResults } from "./utils/command_results.ts";
+import { TypeStore } from "./type_store.ts";
+import { DataSources } from "./data_sources.ts";
 
 type Obj = {
   encodedObject: EncodedObject;
@@ -146,9 +148,13 @@ export class WorkerService {
       request.searchAttributes,
       [],
     );
+
     const communication = new Communication(
       this.#options.objectEncoder,
-      this.#registry.getWorkflowInternalChannelNameStore(wfType),
+      new Map(),
+      new Map(),
+      this.#registry.getInternalChannelNameStore(wfType),
+      this.#registry.getSignalChannelNameStore(wfType),
     );
     if (!stateDef.state.waitUntil) {
       throw new Error(
@@ -232,7 +238,12 @@ export class WorkerService {
     );
     const comm = new Communication(
       this.#options.objectEncoder,
-      this.#registry.getWorkflowInternalChannelNameStore(
+      new Map(),
+      new Map(),
+      this.#registry.getInternalChannelNameStore(
+        request.workflowType,
+      ),
+      this.#registry.getSignalChannelNameStore(
         request.workflowType,
       ),
     );

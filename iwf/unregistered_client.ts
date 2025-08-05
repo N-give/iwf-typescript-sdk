@@ -111,6 +111,20 @@ export class UnregisteredClient {
   ) {
   }
 
+  getWorkflow(
+    workflowId: string,
+    workflowRunId: string,
+    needsResults: boolean,
+  ): Promise<WorkflowGetResponse> {
+    return this.#defaultApi.apiV1WorkflowGetPost({
+      workflowGetRequest: {
+        workflowId,
+        workflowRunId,
+        needsResults,
+      },
+    });
+  }
+
   async getWorkflowDataAttributes(
     workflowId: string,
     workflowRunId: string,
