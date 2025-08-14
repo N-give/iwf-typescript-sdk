@@ -4,11 +4,7 @@ import { Client } from "../iwf/client.ts";
 import Fastify, { FastifyInstance } from "fastify";
 import { LOCAL_DEFAULT_CLIENT_OPTIONS } from "../iwf/client_options.ts";
 import { Context } from "iwfidl";
-import {
-  BASIC_STATE_1,
-  BASIC_STATE_2,
-  BASIC_WORKFLOW,
-} from "./workflows/basic_workflow.ts";
+import { BASIC_STATE_2, BASIC_WORKFLOW } from "./workflows/basic_workflow.ts";
 import routes from "./routes.ts";
 import { REGISTRY } from "./registry.ts";
 
@@ -37,7 +33,7 @@ describe("Basic Workflow", () => {
   });
 
   it("start_basic_workflow", async () => {
-    console.log("starting test...");
+    console.log("starting basic-workflow test...");
     const workflowId = `basic-workflow-${new Date().getTime()}`;
     const ctx: Context = {
       workflowId,

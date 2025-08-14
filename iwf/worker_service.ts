@@ -126,10 +126,7 @@ export class WorkerService {
         `state ${request.workflowStateId} not found in workflow ${wfType}`,
       );
     }
-    const input: Obj = {
-      encodedObject: request.stateInput || {},
-      objectEncoder: this.#options.objectEncoder,
-    };
+    const input = this.#options.objectEncoder.decode(request.stateInput || {});
     const ctx: WorkflowContext = {
       ctx: request.context,
       workflowId: request.context.workflowId,

@@ -39,7 +39,7 @@ describe("Basic persistence workflow tests", () => {
   });
 
   it("start_basic_persistence_workflow", async () => {
-    console.log("starting test...");
+    console.log("starting basic-persistence-workflow test...");
     const workflowId = `basic-persistence-workflow-${new Date().getTime()}`;
     const ctx: Context = {
       workflowId,

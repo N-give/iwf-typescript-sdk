@@ -141,7 +141,13 @@ export default function routes(
       req,
       res,
     ) {
-      res.send(worker_service.handleWorkflowStateWaitUntil(req.body));
+      try {
+        const toReturn = worker_service.handleWorkflowStateWaitUntil(req.body);
+        res.send(toReturn);
+      } catch (e) {
+        console.error("waitUntil error:", e);
+        throw e;
+      }
     },
   );
 
@@ -163,7 +169,13 @@ export default function routes(
       res,
     ) {
       const execReq = WorkflowStateExecuteRequestFromJSON(req.body);
-      res.send(worker_service.handleWorkflowStateExecute(execReq));
+      try {
+        const toReturn = worker_service.handleWorkflowStateExecute(execReq);
+        res.send(toReturn);
+      } catch (e) {
+        console.error("execute error:", e);
+        throw e;
+      }
     },
   );
 

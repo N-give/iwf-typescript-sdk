@@ -31,22 +31,28 @@ export function fromIdlCommandResults(
   );
   const signals: SignalCommandResult[] = (commandResults.signalResults || [])
     .map((r: SignalResult) => {
-      return {
+      const result: SignalCommandResult = {
         commandId: r.commandId,
         channelName: r.signalChannelName,
         status: r.signalRequestStatus,
-        signalValue: r.signalValue,
       };
+      if (r.signalValue) {
+        result.signalValue = encoder.decode(r.signalValue);
+      }
+      return result;
     });
   const internalChannels: InternalChannelCommandResult[] =
     (commandResults.interStateChannelResults || []).map(
       (r: InterStateChannelResult) => {
-        return {
+        const result: InternalChannelCommandResult = {
           commandId: r.commandId,
           channelName: r.channelName,
           status: r.requestStatus,
-          signalValue: r.value,
         };
+        if (r.value) {
+          result.signalValue = encoder.decode(r.value);
+        }
+        return result;
       },
     );
   return new CommandResults(

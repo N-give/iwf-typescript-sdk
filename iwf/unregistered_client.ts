@@ -103,12 +103,19 @@ export class UnregisteredClient {
   }
 
   signalWorkflow(
-    _ctx: Context,
-    _workflowId: string,
-    _workflowRunId: string,
-    _signalChannelName: string,
-    _signalValue: unknown,
+    workflowId: string,
+    workflowRunId: string,
+    signalChannelName: string,
+    signalValue: unknown,
   ) {
+    return this.#defaultApi.apiV1WorkflowSignalPost({
+      workflowSignalRequest: {
+        workflowId,
+        workflowRunId,
+        signalChannelName,
+        signalValue: this.#options.objectEncoder.encode(signalValue),
+      },
+    });
   }
 
   getWorkflow(

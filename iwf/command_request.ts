@@ -50,7 +50,7 @@ export function anyCommandCombinationCompletedRequest(
 ): CommandRequest {
   if (
     commands.some((c) =>
-      c.commandId === null || c.commandId || undefined || c.commandId === ""
+      c.commandId === null || c.commandId === undefined || c.commandId === ""
     )
   ) {
     throw new Error(
@@ -130,6 +130,12 @@ export function toIdlCommandRequest(
   }
   if (interStateCmds.length > 0) {
     idlCmdReq.interStateChannelCommands = interStateCmds;
+  }
+  if (
+    commandRequest.commandCombinations &&
+    commandRequest.commandCombinations.length > 0
+  ) {
+    idlCmdReq.commandCombinations = commandRequest.commandCombinations;
   }
   return idlCmdReq;
 }

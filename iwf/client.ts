@@ -145,7 +145,6 @@ export class Client {
   // workflowId is required, workflowRunId is optional and default to current runId of the workflowId
   // signalChannelName is required, signalValue is optional(for case of empty value)
   signalWorkflow(
-    ctx: Context,
     workflow: IWorkflow,
     workflowId: string,
     workflowRunId: string,
@@ -160,7 +159,6 @@ export class Client {
       );
     }
     return this.#unregisteredClient.signalWorkflow(
-      ctx,
       workflowId,
       workflowRunId,
       signalChannelName,

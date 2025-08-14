@@ -8,14 +8,14 @@ export type TimerCommandResult = {
 export type SignalCommandResult = {
   commandId: string;
   channelName: string;
-  signalValue: unknown;
+  signalValue?: unknown;
   status: ChannelRequestStatus;
 };
 
 export type InternalChannelCommandResult = {
   commandId: string;
   channelName: string;
-  signalValue: unknown;
+  signalValue?: unknown;
   status: ChannelRequestStatus;
 };
 
@@ -35,6 +35,14 @@ export class CommandResults {
     this._signals = signals;
     this._internalChannels = internalChannels;
     this._stateWaitUntilApiSucceeded = stateWaitUntilApiSucceeded;
+  }
+
+  getAllSignalCommandResults(): SignalCommandResult[] {
+    return this._signals;
+  }
+
+  getAllTimerCommandResults(): TimerCommandResult[] {
+    return this._timers;
   }
 
   getTimerCommandResultById(
