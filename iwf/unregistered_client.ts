@@ -167,25 +167,37 @@ export class UnregisteredClient {
   }
 
   skipTimerByCommandId(
-    _ctx: Context,
-    _workflowId: string,
-    _workflowRunId: string,
-    _stateId: string,
-    _stateExecutionNumber: number,
-    _timerCommandId: string,
+    workflowId: string,
+    workflowRunId: string,
+    stateId: string,
+    stateExecutionNumber: number,
+    timerCommandId: string,
   ) {
-    throw new Error("Method not implemented.");
+    this.#defaultApi.apiV1WorkflowTimerSkipPost({
+      workflowSkipTimerRequest: {
+        workflowId,
+        workflowRunId,
+        workflowStateExecutionId: `${stateId}-${stateExecutionNumber}`,
+        timerCommandId,
+      },
+    });
   }
 
   skipTimerByCommandIndex(
-    _ctx: Context,
-    _workflowId: string,
-    _workflowRunId: string,
-    _stateId: string,
-    _stateExecutionNumber: number,
-    _timerCommandIndex: number,
+    workflowId: string,
+    workflowRunId: string,
+    stateId: string,
+    stateExecutionNumber: number,
+    timerCommandIndex: number,
   ) {
-    throw new Error("Method not implemented.");
+    this.#defaultApi.apiV1WorkflowTimerSkipPost({
+      workflowSkipTimerRequest: {
+        workflowId,
+        workflowRunId,
+        workflowStateExecutionId: `${stateId}-${stateExecutionNumber}`,
+        timerCommandIndex,
+      },
+    });
   }
 
   waitForWorkflowCompletion(workflowId: string) {

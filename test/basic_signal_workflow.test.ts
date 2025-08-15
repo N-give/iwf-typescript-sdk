@@ -8,10 +8,11 @@ import { REGISTRY } from "./registry.ts";
 import routes from "./routes.ts";
 import {
   BASIC_SIGNAL_WORKFLOW,
-  BASIC_SIGNAL_WORKFLOW_STATE_1,
+  BASIC_SIGNAL_WORKFLOW_STATE_2,
   SIGNAL_CHANNEL_NAME_1,
   SIGNAL_CHANNEL_NAME_3,
   SIGNAL_CHANNEL_PREFIX,
+  TIMER_COMMAND_ID,
 } from "./workflows/basic_signal_workflow.ts";
 import z from "zod/v3";
 
@@ -65,7 +66,7 @@ describe("Basic signal workflow tests", () => {
       },
     );
     assert.ok(wfRunId, "Workflow Run Id should not be null");
-    await (new Promise((resolve) => setTimeout(resolve, 5000)));
+    await (new Promise((resolve) => setTimeout(resolve, 2000)));
     client.signalWorkflow(
       BASIC_SIGNAL_WORKFLOW,
       workflowId,
@@ -73,7 +74,7 @@ describe("Basic signal workflow tests", () => {
       SIGNAL_CHANNEL_NAME_1,
       1,
     );
-    await (new Promise((resolve) => setTimeout(resolve, 5000)));
+    await (new Promise((resolve) => setTimeout(resolve, 2000)));
     client.signalWorkflow(
       BASIC_SIGNAL_WORKFLOW,
       workflowId,
@@ -104,6 +105,14 @@ describe("Basic signal workflow tests", () => {
       wfRunId,
       `${SIGNAL_CHANNEL_PREFIX}-1`,
       1,
+    );
+
+    client.skipTimerByCommandId(
+      workflowId,
+      wfRunId,
+      BASIC_SIGNAL_WORKFLOW_STATE_2,
+      1,
+      TIMER_COMMAND_ID,
     );
 
     const result: number = await client.waitForWorkflowCompletion(

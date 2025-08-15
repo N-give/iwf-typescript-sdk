@@ -248,7 +248,6 @@ export class Client {
 
   // SkipTimerByCommandId skips a timer for the state execution based on the timerCommandId
   skipTimerByCommandId(
-    ctx: Context,
     workflowId: string,
     workflowRunId: string,
     workflowState: IWorkflowState,
@@ -257,7 +256,6 @@ export class Client {
   ) {
     const stateId = getFinalWorkflowStateId(workflowState);
     return this.#unregisteredClient.skipTimerByCommandId(
-      ctx,
       workflowId,
       workflowRunId,
       stateId,
@@ -268,7 +266,6 @@ export class Client {
 
   // SkipTimerByCommandIndex skips a timer for the state execution based on the timerCommandId
   skipTimerByCommandIndex(
-    ctx: Context,
     workflowId: string,
     workflowRunId: string,
     workflowState: IWorkflowState,
@@ -277,7 +274,6 @@ export class Client {
   ) {
     const stateId = getFinalWorkflowStateId(workflowState);
     return this.#unregisteredClient.skipTimerByCommandIndex(
-      ctx,
       workflowId,
       workflowRunId,
       stateId,

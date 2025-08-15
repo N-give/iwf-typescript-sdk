@@ -46,6 +46,11 @@ export const SIGNAL_CHANNEL_NAME_2 = "test-signal-channel-2";
 export const SIGNAL_CHANNEL_NAME_3 = "test-signal-channel-3";
 export const SIGNAL_CHANNEL_PREFIX = "test-signal-channel-prefix";
 
+export const SIGNAL_COMMAND_ID_1 = "test-signal-1";
+export const SIGNAL_COMMAND_ID_2 = "test-signal-2";
+export const SIGNAL_COMMAND_ID_3 = "test-signal-3";
+export const TIMER_COMMAND_ID = "test-timer-id";
+
 class BasicSignalWorkflowState1 implements IWorkflowState {
   #COMMAND_ID = "test-signal-command";
 
@@ -95,13 +100,8 @@ class BasicSignalWorkflowState1 implements IWorkflowState {
 }
 
 class BasicSignalWorkflowState2 implements IWorkflowState {
-  #SIGNAL_COMMAND_ID_1 = "test-signal-1";
-  #SIGNAL_COMMAND_ID_2 = "test-signal-2";
-  #SIGNAL_COMMAND_ID_3 = "test-signal-3";
-  #TIMER_COMMAND_ID = "test-timer-id";
-
-  DURATION_SECONDS = 10; // 365 day long timer duration
-  // DURATION_SECONDS = 60 * 60 * 24 * 365; // 365 day long timer duration
+  // DURATION_SECONDS = 10; // 365 day long timer duration
+  DURATION_SECONDS = 60 * 60 * 24 * 365; // 365 day long timer duration
 
   getStateId(): string {
     return "BasicSignalWorkflowState2";
@@ -120,15 +120,15 @@ class BasicSignalWorkflowState2 implements IWorkflowState {
     console.log("BasicSignalWorkflowState2::waitUntil");
     return anyCommandCombinationCompletedRequest(
       [[
-        this.#SIGNAL_COMMAND_ID_1,
-        this.#SIGNAL_COMMAND_ID_3,
-        this.#TIMER_COMMAND_ID,
+        SIGNAL_COMMAND_ID_1,
+        SIGNAL_COMMAND_ID_3,
+        TIMER_COMMAND_ID,
       ]],
-      newSignalCommand(this.#SIGNAL_COMMAND_ID_1, SIGNAL_CHANNEL_NAME_1),
-      newSignalCommand(this.#SIGNAL_COMMAND_ID_1, SIGNAL_CHANNEL_NAME_2),
-      newSignalCommand(this.#SIGNAL_COMMAND_ID_2, SIGNAL_CHANNEL_NAME_3),
-      newSignalCommand(this.#SIGNAL_COMMAND_ID_3, `${SIGNAL_CHANNEL_PREFIX}-1`),
-      newTimerCommandByDuration(this.#TIMER_COMMAND_ID, this.DURATION_SECONDS),
+      newSignalCommand(SIGNAL_COMMAND_ID_1, SIGNAL_CHANNEL_NAME_1),
+      newSignalCommand(SIGNAL_COMMAND_ID_1, SIGNAL_CHANNEL_NAME_2),
+      newSignalCommand(SIGNAL_COMMAND_ID_2, SIGNAL_CHANNEL_NAME_3),
+      newSignalCommand(SIGNAL_COMMAND_ID_3, `${SIGNAL_CHANNEL_PREFIX}-1`),
+      newTimerCommandByDuration(TIMER_COMMAND_ID, this.DURATION_SECONDS),
     );
   }
 
@@ -154,7 +154,7 @@ class BasicSignalWorkflowState2 implements IWorkflowState {
     const signalCommandResult3 = commandResults.getAllSignalCommandResults()[2];
     if (
       signalCommandResult3.status === "RECEIVED" ||
-      signalCommandResult3.commandId !== this.#SIGNAL_COMMAND_ID_2
+      signalCommandResult3.commandId !== SIGNAL_COMMAND_ID_2
     ) {
       output += signalCommandResult3.signalValue as number;
     }
@@ -162,12 +162,13 @@ class BasicSignalWorkflowState2 implements IWorkflowState {
     const signalCommandResult4 = commandResults.getAllSignalCommandResults()[3];
     if (
       signalCommandResult4.status === "RECEIVED" ||
-      signalCommandResult4.commandId !== this.#SIGNAL_COMMAND_ID_3
+      signalCommandResult4.commandId !== SIGNAL_COMMAND_ID_3
     ) {
       output += signalCommandResult4.signalValue as number;
     }
 
     const timerResult = commandResults.getAllTimerCommandResults()[0];
+    console.log("timer result:", JSON.stringify(timerResult, null, 2));
     if (timerResult.status === "FIRED") {
       output += 100;
     }
