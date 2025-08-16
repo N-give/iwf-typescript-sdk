@@ -5,13 +5,10 @@
   "module": "main.js",
   "types": "dist/index.ts",
   "scripts": {
-    "setup": "npm run gen && npm install ./gen/iwfidl/ --install-links",
     "build:all": "npm run gen && npm run build",
     "build": "tsc",
     "test": "node --test",
     "retest": "npm run build && npm run test",
-    "gen": "openapi-generator-cli generate && npm run typed-openapi iwf-idl/iwf-sdk.yaml -o gen/api-schema.ts --runtime zod",
-    "unnecessary": "openapi-typescript iwf-idl/iwf-sdk.yaml -o gen/iwf-sdk.ts ",
     "clean": "rm -rf ./gen && rm -rf ./dist"
   },
   "keywords": [],

@@ -45,6 +45,10 @@
             typescript
             typescript-language-server
           ];
+
+          shellHook = ''
+            ./scripts/setup.sh
+          '';
         };
       }
     );
