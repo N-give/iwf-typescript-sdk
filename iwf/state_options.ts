@@ -55,10 +55,10 @@ export const DEFAULT_STATE_OPTIONS: StateOptions = {
   executeApiTimeoutSeconds: 0,
   executeApiRetryPolicy: DEFAULT_RETRY_POLICY,
   executeApiFailureProceedState: {
-    getStateId: function (): string {
+    getStateId: function(): string {
       return "DEFAULT_STATE_ID";
     },
-    execute: function (
+    execute: function(
       ctx: WorkflowContext,
       input: unknown,
       commandResults: CommandResults,
@@ -66,9 +66,6 @@ export const DEFAULT_STATE_OPTIONS: StateOptions = {
       communication: Communication,
     ): StateDecision {
       throw new Error("Function not implemented.");
-    },
-    getStateOptions: function (): StateOptions | undefined {
-      return undefined;
     },
   },
   executeApiDataAttributesLoadingPolicy: DEFAULT_PERSISTENCE_LOADING_POLICY,

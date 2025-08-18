@@ -63,7 +63,7 @@ export interface IWorkflowState {
 
   // GetStateOptions can just return undefined to use the default Options
   // StateOptions is optional configuration to adjust the state behaviors
-  getStateOptions: () => StateOptions | undefined;
+  getStateOptions?: () => StateOptions;
 }
 
 export function getFinalWorkflowStateId(s: IWorkflowState): string {

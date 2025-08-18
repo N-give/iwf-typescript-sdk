@@ -89,10 +89,6 @@ class BasicPersistenceState implements IWorkflowState {
     console.log("persistence workflow saDatetime:", saDatetime);
     return gracefulCompleteWorkflow("finished");
   }
-
-  getStateOptions() {
-    return undefined;
-  }
 }
 
 export const BASIC_PERSISTENCE_STATE = new BasicPersistenceState();

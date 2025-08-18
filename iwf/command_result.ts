@@ -45,6 +45,10 @@ export class CommandResults {
     return this._timers;
   }
 
+  getAllInternalChannelCommandResults(): InternalChannelCommandResult[] {
+    return this._internalChannels;
+  }
+
   getTimerCommandResultById(
     commandId: string,
   ): TimerCommandResult | undefined {

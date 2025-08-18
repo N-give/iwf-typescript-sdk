@@ -61,10 +61,11 @@ export class Communication {
       throw new Error(`channel name ${channelName} is not registered`);
     }
 
-    const channel = this._toPublish.get(channelName);
-    if (!channel) {
-      throw new Error(`channel ${channelName} not found`);
+    if (!this._toPublish.has(channelName)) {
+      this._toPublish.set(channelName, []);
     }
+
+    const channel = this._toPublish.get(channelName)!;
     const encoded = this.encoder.encode(value);
     channel.push(encoded);
   }

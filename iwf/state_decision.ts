@@ -2,6 +2,7 @@ import {
   FORCE_COMPLETING_WORKFLOW_STATE_ID,
   FORCE_FAILING_WORKFLOW_STATE_ID,
   GRACEFUL_COMPLETING_WORKFLOW_STATE_ID,
+  newStateMovement,
   StateMovement,
 } from "./state_movement.ts";
 import { getFinalWorkflowStateId, IWorkflowState } from "./workflow_state.ts";
@@ -15,10 +16,7 @@ export function singleNextState(
   input?: unknown,
 ): StateDecision {
   return {
-    nextStates: [{
-      nextStateId: getFinalWorkflowStateId(state),
-      nextStateInput: input,
-    }],
+    nextStates: [newStateMovement(state, input)],
   };
 }
 

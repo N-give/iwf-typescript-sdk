@@ -8,11 +8,22 @@ import { Registry } from "./registry.ts";
 import { StateDecision } from "./state_decision.ts";
 import { toIdlStateOptions } from "./utils/state_options.ts";
 import { shouldSkipWaitUntilApi } from "./utils/workflow_state.ts";
+import { getFinalWorkflowStateId, IWorkflowState } from "./workflow_state.ts";
 
 export type StateMovement = {
   nextStateId: string;
   nextStateInput?: unknown;
 };
+
+export function newStateMovement(
+  state: IWorkflowState,
+  input?: unknown,
+): StateMovement {
+  return {
+    nextStateId: getFinalWorkflowStateId(state),
+    nextStateInput: input,
+  };
+}
 
 export const RESERVED_STATE_ID_PREFIX = "_SYS_";
 export const GRACEFUL_COMPLETING_WORKFLOW_STATE_ID =
@@ -43,7 +54,7 @@ export function toIdlDecision(
       }
       const options: WorkflowStateOptions = toIdlStateOptions(
         shouldSkipWaitUntilApi(stateDef.state),
-        stateDef.state.getStateOptions(),
+        stateDef.state.getStateOptions && stateDef.state.getStateOptions(),
       );
       return {
         stateId: m.nextStateId,

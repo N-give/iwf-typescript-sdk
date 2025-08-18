@@ -27,7 +27,6 @@ import {
   startingStateDef,
   StateDef,
 } from "../../iwf/state_def.ts";
-import { StateOptions } from "../../iwf/state_options.ts";
 import { IWorkflow } from "../../iwf/workflow.ts";
 import { WorkflowContext } from "../../iwf/workflow_context.ts";
 import { IWorkflowState } from "../../iwf/workflow_state.ts";
@@ -56,10 +55,6 @@ class BasicSignalWorkflowState1 implements IWorkflowState {
 
   getStateId(): string {
     return "BasicSignalWorkflowState1";
-  }
-
-  getStateOptions(): StateOptions | undefined {
-    return undefined;
   }
 
   waitUntil(
@@ -105,10 +100,6 @@ class BasicSignalWorkflowState2 implements IWorkflowState {
 
   getStateId(): string {
     return "BasicSignalWorkflowState2";
-  }
-
-  getStateOptions(): StateOptions | undefined {
-    return undefined;
   }
 
   waitUntil(

@@ -94,7 +94,7 @@ export class Client {
       workflowRetryPolicy: options.workflowRetryPolicy,
       startStateOptions: toIdlStateOptions(
         shouldSkipWaitUntilApi(startingState),
-        startingState.getStateOptions(),
+        startingState.getStateOptions && startingState.getStateOptions(),
       ),
       initialSearchAttributes: this.#convertToSearchAttributeList(
         saTypes,
@@ -163,6 +163,40 @@ export class Client {
       workflowRunId,
       signalChannelName,
       signalValue,
+    );
+  }
+
+  publishToInternalChannel(
+    workflow: IWorkflow,
+    workflowId: string,
+    workflowRunId: string = "",
+    internalChannelName: string,
+    ...messages: unknown[]
+  ) {
+    const wfType = getFinalWorkflowType(workflow);
+    const internalChannelNameStore = this.#registry.getInternalChannelNameStore(
+      wfType,
+    );
+    const [isValidKey, validator] =
+      internalChannelNameStore?.validateKeyAndData(internalChannelName) ||
+      [false, undefined];
+    if (!isValidKey) {
+      throw new Error(
+        `internal channel ${internalChannelName} is not defined in workflow type ${wfType}`,
+      );
+    }
+    this.#unregisteredClient.publishToInternalChannel(
+      workflowId,
+      workflowRunId,
+      messages.map(
+        (message) => {
+          const rawMessage = validator(message);
+          return {
+            channelName: internalChannelName,
+            value: this.#options.objectEncoder.encode(rawMessage),
+          };
+        },
+      ),
     );
   }
 
@@ -313,11 +347,15 @@ export class Client {
   // workflowId is required, workflowRunId is optional and default to current runId of the workflowId
   // options is optional, default (when nil)to use Cancel as stopType
   stopWorkflow(
-    _ctx: Context,
-    _workflowId: string,
-    _workflowRunId: string,
-    _options: WorkflowStopOptions,
+    workflowId: string,
+    workflowRunId: string = "",
+    options?: WorkflowStopOptions,
   ) {
+    this.#unregisteredClient.stopWorkflow(
+      workflowId,
+      workflowRunId,
+      options,
+    );
   }
 
   // UpdateWorkflowConfig updates the config of a workflow

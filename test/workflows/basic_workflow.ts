@@ -47,10 +47,6 @@ class BasicState2 implements IWorkflowState {
     console.log(`${ctx.stateExecutionId} execute ${ctx.attempt}`);
     return gracefulCompleteWorkflow();
   }
-
-  getStateOptions() {
-    return undefined;
-  }
 }
 
 export const BASIC_STATE_2 = new BasicState2();
@@ -79,10 +75,6 @@ class BasicState1 implements IWorkflowState {
   ): StateDecision {
     console.log(`${ctx.stateExecutionId} execute ${ctx.attempt}`);
     return singleNextState(BASIC_STATE_2);
-  }
-
-  getStateOptions() {
-    return undefined;
   }
 }
 

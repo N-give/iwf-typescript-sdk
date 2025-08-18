@@ -5,8 +5,6 @@ import {
   Context,
   DefaultApi,
   KeyValue,
-  SearchAttribute,
-  SearchAttributeValueType,
   StateCompletionOutput,
   WorkflowGetRequest,
   WorkflowGetResponse,
@@ -21,9 +19,12 @@ import {
 import { UnregisteredWorkflowOptions } from "./unregistered_workflow_options.ts";
 import { getSearchAttributeValue } from "./utils/search_attributes.ts";
 import {
+  InterStateChannelPublishing,
   SearchAttributeKeyAndType,
   WorkflowGetSearchAttributesResponse,
+  WorkflowStopRequest,
 } from "../gen/api-schema.ts";
+import { WorkflowStopOptions } from "./workflow_stop_options.ts";
 
 export class UnregisteredClient {
   #options: ClientOptions;
@@ -118,6 +119,20 @@ export class UnregisteredClient {
     });
   }
 
+  publishToInternalChannel(
+    workflowId: string,
+    workflowRunId: string,
+    messages: InterStateChannelPublishing[],
+  ) {
+    this.#defaultApi.apiV1WorkflowPublishToInternalChannelPost({
+      publishToInternalChannelRequest: {
+        workflowId,
+        workflowRunId,
+        messages,
+      },
+    });
+  }
+
   getWorkflow(
     workflowId: string,
     workflowRunId: string,
@@ -200,6 +215,26 @@ export class UnregisteredClient {
     });
   }
 
+  stopWorkflow(
+    workflowId: string,
+    workflowRunId: string,
+    options?: WorkflowStopOptions,
+  ) {
+    const workflowStopRequest: WorkflowStopRequest = {
+      workflowId,
+      workflowRunId,
+    };
+    if (options && options.stopType) {
+      workflowStopRequest.stopType = options.stopType;
+    }
+    if (options && options.reason) {
+      workflowStopRequest.reason = options.reason;
+    }
+    this.#defaultApi.apiV1WorkflowStopPost({
+      workflowStopRequest,
+    });
+  }
+
   waitForWorkflowCompletion(workflowId: string) {
     throw new Error("Method not implemented.");
   }
@@ -248,8 +283,13 @@ export class UnregisteredClient {
       workflowRunId,
       withWait,
     );
+    console.log("workflow results:", JSON.stringify(workflowResults, null, 2));
     const filteredResults = workflowResults.filter((res) =>
-      !!res.completedStateOutput
+      !!res.completedStateOutput && !!res.completedStateOutput.data
+    );
+    console.log(
+      "filtered workflow results:",
+      JSON.stringify(filteredResults, null, 2),
     );
     if (workflowResults.length > 1 && filteredResults.length > 1) {
       throw new Error(
